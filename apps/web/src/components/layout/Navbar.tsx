@@ -183,7 +183,7 @@ const Navbar: React.FC = () => {
       </div>
 
       {/* Navigation Bar Custom */}
-      <nav className="bg-[#313a46] hidden 2xl:block">
+      <nav className="bg-[var(--color-dark)] hidden 2xl:block">
         <div className="container-fluid max-w-[1400px] mx-auto px-6">
           <ul className="flex items-center">
             {menuItems.map((item, idx) => {
@@ -251,7 +251,7 @@ const Navbar: React.FC = () => {
             className="fixed inset-0 bg-black/50 z-[90] 2xl:hidden backdrop-blur-sm"
             onClick={() => setIsMobileMenuOpen(false)}
           />
-          <div className="fixed top-0 right-0 h-full w-[280px] bg-[#313a46] z-[100] 2xl:hidden shadow-2xl animate-in slide-in-from-right duration-300 flex flex-col">
+          <div className="fixed top-0 right-0 h-full w-[280px] bg-[var(--color-dark)] z-[100] 2xl:hidden shadow-2xl animate-in slide-in-from-right duration-300 flex flex-col">
             <div className="p-6 border-b border-white/10 flex items-center justify-between">
               <div className="bg-white p-2 rounded-lg">
                 <img 

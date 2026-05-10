@@ -258,7 +258,7 @@ const Report: React.FC = () => {
 
         {/* Sidebar Summary */}
         <div className="lg:col-span-3 space-y-6">
-           <div className="bg-[#313a46] rounded-2xl shadow-xl p-6 text-white overflow-hidden relative">
+           <div className="bg-[var(--color-dark)] rounded-2xl shadow-xl p-6 text-white overflow-hidden relative">
               <div className="absolute -right-8 -top-8 w-32 h-32 bg-white/5 rounded-full blur-3xl"></div>
               <h5 className="text-xs font-black uppercase tracking-[0.2em] mb-6 text-white/50 border-b border-white/10 pb-4">Status Summary</h5>
               
