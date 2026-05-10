@@ -28,12 +28,23 @@ const PORT = process.env.PORT || 5000;
 app.use(helmet());
 app.use(morgan('dev'));
 
+// General API rate limiter — 1000 req per 15 min per IP
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP to 100 requests per windowMs
+  windowMs: 15 * 60 * 1000,
+  max: 1000,
   message: 'Too many requests from this IP, please try again after 15 minutes',
+  skip: (req) => req.path.includes('/dashboard/stats'), // never throttle polling
 });
 app.use('/api/', limiter as any);
+
+// Strict limiter for auth endpoints only — prevent brute force
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 30, // 30 login attempts per 15 min
+  message: 'Too many login attempts, please try again after 15 minutes',
+});
+app.use('/api/v1/auth/login', authLimiter as any);
+app.use('/api/v1/auth/google-login', authLimiter as any);
 
 const allowedOrigin = process.env.CORS_ORIGIN || 'http://localhost:5173';
 app.use(cors({
