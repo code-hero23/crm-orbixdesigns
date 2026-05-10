@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
   Home, 
@@ -15,6 +15,8 @@ import {
   X
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import { leadService } from '../../services/api';
+import type { DashboardStats } from '../../types/crm';
 
 interface MenuItem {
   title: string;
@@ -27,8 +29,26 @@ interface MenuItem {
 const Navbar: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
+  const [stats, setStats] = useState<DashboardStats | null>(null);
   const location = useLocation();
   const { user, logout } = useAuth();
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      if (!user) return;
+      try {
+        const data = await leadService.getStats();
+        setStats(data);
+      } catch (err) {
+        console.error("Failed to fetch navbar stats", err);
+      }
+    };
+    
+    fetchStats();
+    // Poll every 30 seconds for real-time feel
+    const interval = setInterval(fetchStats, 30000);
+    return () => clearInterval(interval);
+  }, [user]);
 
   const toggleExpand = (title: string) => {
     setExpandedItems(prev => 
@@ -74,20 +94,20 @@ const Navbar: React.FC = () => {
         { title: 'Email Templates', path: '/master/email-template' },
       ]
     },
-    { title: 'Lead Hub', path: '/leadhub', icon: <Users size={18} />, badge: 19 },
-    { title: 'Leads', path: '/leads', icon: <User size={18} />, badge: '14.2k' },
+    { title: 'Lead Hub', path: '/leadhub', icon: <Users size={18} />, badge: stats?.freshlead || undefined },
+    { title: 'Leads', path: '/leads', icon: <User size={18} />, badge: stats ? (stats.freshlead + stats.creleads + stats.yettofollow + stats.followup + stats.opportunities + stats.orderbook) : undefined },
     { 
       title: 'Tasks', 
       path: '#', 
       icon: <CheckSquare size={18} />, 
-      badge: 7,
+      badge: stats?.internal || undefined,
       submenu: [
         { title: 'Active Tasks', path: '/tasks' },
         { title: 'Closed Archive', path: '/closed-tasks' },
       ]
     },
-    { title: 'Showroom Visits', path: '/visits', icon: <Box size={18} />, badge: 350 },
-    { title: 'Appointments', path: '/appointment', icon: <Calendar size={18} />, badge: 84 },
+    { title: 'Showroom Visits', path: '/visits', icon: <Box size={18} />, badge: stats?.showRoomVisit || undefined },
+    { title: 'Appointments', path: '/appointment', icon: <Calendar size={18} />, badge: stats?.appointment || undefined },
     { title: 'Reports', path: '/report', icon: <Flag size={18} /> },
   ];
 
@@ -180,11 +200,11 @@ const Navbar: React.FC = () => {
                 >
                   {item.icon}
                   <span>{item.title}</span>
-                  {item.badge && (
+                  {item.badge ? (
                     <span className="ml-1 bg-danger text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
                       {item.badge}
                     </span>
-                  )}
+                  ) : null}
                   {item.submenu && <ChevronDown size={14} className="ml-1 opacity-50" />}
                 </Link>
 
@@ -323,11 +343,11 @@ const Navbar: React.FC = () => {
                           {item.icon}
                           <span className="text-sm font-medium">{item.title}</span>
                         </div>
-                        {item.badge && (
+                        {item.badge ? (
                           <span className="bg-danger text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
                             {item.badge}
                           </span>
-                        )}
+                        ) : null}
                       </Link>
                     )}
                   </div>
