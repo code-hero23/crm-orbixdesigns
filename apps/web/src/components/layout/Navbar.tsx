@@ -128,9 +128,6 @@ const Navbar: React.FC = () => {
 
           {/* Topbar Right */}
           <div className="flex items-center gap-6">
-            <button className="bg-[#f05050] text-white px-3 py-1.5 text-xs font-medium rounded shadow-sm hover:opacity-90 transition-opacity">
-               Start Work
-            </button>
             <div className="relative cursor-pointer">
               <Bell size={22} className="text-gray-400" />
               <span className="absolute -top-1 -right-1 bg-danger text-white text-[10px] font-bold px-1.5 rounded-full border-2 border-white">0</span>
@@ -161,18 +158,6 @@ const Navbar: React.FC = () => {
                 >
                   Logout
                 </button>
-                <div className="border-t border-gray-50 mt-1 pt-1">
-                   <button 
-                    onClick={() => {
-                        const { toggleRole } = (window as any).authHelpers || {};
-                        if (toggleRole) toggleRole();
-                        else alert('Role toggle is only available in development mode.');
-                    }}
-                    className="w-full text-left block px-4 py-2 text-[10px] font-bold text-brand hover:bg-gray-50 uppercase tracking-widest"
-                  >
-                    Switch to {user?.role === 'ADMIN' ? 'CRE' : 'ADMIN'}
-                  </button>
-                </div>
               </div>
             </div>
             
