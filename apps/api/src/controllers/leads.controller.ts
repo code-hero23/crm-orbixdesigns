@@ -120,7 +120,7 @@ export const getLeads = asyncHandler(async (req: Request, res: Response) => {
   ]);
 
   apiResponse.success(res, {
-    data: data.map(l => ({
+    data: data.map((l: any) => ({
         ...l,
         brand_name: l.brand?.name || '-',
         status_name: l.status?.name || '-',
