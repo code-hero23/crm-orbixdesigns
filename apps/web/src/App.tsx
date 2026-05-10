@@ -18,6 +18,7 @@ import BankDetails from './pages/BankDetails';
 import LeadStatus from './pages/LeadStatus';
 import TemplateManagement from './pages/TemplateManagement';
 import Report from './pages/Report';
+import Reminders from './pages/Reminders';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -53,6 +54,7 @@ const App: React.FC = () => {
           <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
           <Route path="/signature-photos" element={<ProtectedRoute><SignaturePhoto /></ProtectedRoute>} />
           <Route path="/report" element={<ProtectedRoute><Report /></ProtectedRoute>} />
+          <Route path="/reminders" element={<ProtectedRoute><Reminders /></ProtectedRoute>} />
           
           {/* Master Data Routes */}
           <Route path="/master/bank-details" element={<ProtectedRoute><BankDetails /></ProtectedRoute>} />
