@@ -1,0 +1,86 @@
+import express from 'express'; // reload
+import type { Request, Response, NextFunction } from 'express';
+import { apiResponse } from './utils/apiUtils.js';
+import cors from 'cors';
+import dotenv from 'dotenv';
+import helmet from 'helmet';
+import morgan from 'morgan';
+import rateLimit from 'express-rate-limit';
+
+// Import Routes
+import leadRoutes from './routes/leads.js';
+import userRoutes from './routes/users.js';
+import visitRoutes from './routes/visits.js';
+import taskRoutes from './routes/tasks.js';
+import masterRoutes from './routes/masters.js';
+import photoRoutes from './routes/photos.js';
+import authRoutes from './routes/auth.js';
+import { getDashboardStats } from './controllers/dashboard.controller.js';
+import { authenticate } from './middleware/auth.middleware.js';
+import path from 'path';
+
+dotenv.config();
+
+const app = express();
+const PORT = process.env.PORT || 5000;
+
+// Security and Logging Middlewares
+app.use(helmet());
+app.use(morgan('dev'));
+
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // limit each IP to 100 requests per windowMs
+  message: 'Too many requests from this IP, please try again after 15 minutes',
+});
+app.use('/api/', limiter as any);
+
+const allowedOrigin = process.env.CORS_ORIGIN || 'http://localhost:5173';
+app.use(cors({
+  origin: allowedOrigin,
+  credentials: true
+}));
+app.use(express.json());
+app.use(express.static(path.join(process.cwd(), 'public')));
+
+// API Routes
+app.use('/api/v1/auth', authRoutes); // Unprotected
+
+// Protected API Routes
+app.use('/api/v1/leads', authenticate, leadRoutes);
+app.use('/api/v1/users', authenticate, userRoutes);
+app.use('/api/v1/visits', authenticate, visitRoutes);
+app.use('/api/v1/tasks', authenticate, taskRoutes);
+app.use('/api/v1/masters', authenticate, masterRoutes);
+app.use('/api/v1/photos', authenticate, photoRoutes);
+
+// Dashboard
+app.get('/api/v1/dashboard/stats', authenticate, getDashboardStats);
+
+// Auth routes (Mock for now)
+app.get('/auth/google', (_req: Request, res: Response) => {
+  res.redirect('http://localhost:5173/'); // Redirect back to frontend
+});
+
+// Health Check
+app.get('/health', (_req: Request, res: Response) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+// 404 Handler
+app.use((_req: Request, res: Response) => {
+  res.status(404).json({ message: 'Resource not found' });
+});
+
+// Global Error Handler
+app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
+  console.error('🔥 Global Error:', err);
+  const status = err.status || 500;
+  const message = err.message || 'Internal Server Error';
+  
+  apiResponse.error(res, message, status, err);
+});
+
+app.listen(PORT, () => {
+  console.log(`🚀 Server running at http://localhost:${PORT}`);
+});
