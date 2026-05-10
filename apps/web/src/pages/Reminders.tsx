@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { leadService } from '../services/api';
-import { Bell, Phone, User, Calendar, ChevronLeft, ChevronRight, Clock, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Bell, Phone, Calendar, ChevronLeft, ChevronRight, Clock, AlertCircle, CheckCircle2 } from 'lucide-react';
 
 const Reminders: React.FC = () => {
     const [leads, setLeads] = useState<any[]>([]);
