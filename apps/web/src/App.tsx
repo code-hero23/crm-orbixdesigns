@@ -36,6 +36,23 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
   );
 };
 
+// Admin-only route — redirects CRE / non-admin employees back to dashboard
+const AdminRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { user } = useAuth();
+  if (!user) return <Navigate to="/login" replace />;
+  if (user.role !== 'ADMIN') return <Navigate to="/" replace />;
+  return (
+    <div className="min-h-screen bg-[#F4F7FA]">
+      <Navbar />
+      <div className="wrapper py-4">
+        <main className="max-w-[1400px] mx-auto px-4 sm:px-6">
+          {children}
+        </main>
+      </div>
+    </div>
+  );
+};
+
 const App: React.FC = () => {
   return (
     <Router>
@@ -50,31 +67,31 @@ const App: React.FC = () => {
           <Route path="/closed-tasks" element={<ProtectedRoute><ClosedTasks /></ProtectedRoute>} />
           <Route path="/visits" element={<ProtectedRoute><Visits /></ProtectedRoute>} />
           <Route path="/appointment" element={<ProtectedRoute><Appointments /></ProtectedRoute>} />
-          <Route path="/users" element={<ProtectedRoute><Users /></ProtectedRoute>} />
+          <Route path="/users" element={<AdminRoute><Users /></AdminRoute>} />
           <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-          <Route path="/signature-photos" element={<ProtectedRoute><SignaturePhoto /></ProtectedRoute>} />
-          <Route path="/report" element={<ProtectedRoute><Report /></ProtectedRoute>} />
+          <Route path="/signature-photos" element={<AdminRoute><SignaturePhoto /></AdminRoute>} />
+          <Route path="/report" element={<AdminRoute><Report /></AdminRoute>} />
           <Route path="/reminders" element={<ProtectedRoute><Reminders /></ProtectedRoute>} />
           
-          {/* Master Data Routes */}
-          <Route path="/master/bank-details" element={<ProtectedRoute><BankDetails /></ProtectedRoute>} />
-          <Route path="/master/lead-status" element={<ProtectedRoute><LeadStatus /></ProtectedRoute>} />
-          <Route path="/master/stages" element={<ProtectedRoute><MasterDataView title="Stages" type="stage" apiKey="stages" /></ProtectedRoute>} />
-          <Route path="/master/source" element={<ProtectedRoute><MasterDataView title="Source" type="source" apiKey="sources" /></ProtectedRoute>} />
-          <Route path="/master/split-up" element={<ProtectedRoute><MasterDataView title="Split Up" type="splitUp" apiKey="splitUps" /></ProtectedRoute>} />
-          <Route path="/master/activity" element={<ProtectedRoute><MasterDataView title="Activity Types" type="activityType" apiKey="activityTypes" /></ProtectedRoute>} />
-          <Route path="/master/salutation" element={<ProtectedRoute><MasterDataView title="Salutation" type="salutation" apiKey="salutations" /></ProtectedRoute>} />
-          <Route path="/master/lead-tag" element={<ProtectedRoute><MasterDataView title="Lead Tags" type="leadTag" apiKey="leadTags" /></ProtectedRoute>} />
-          <Route path="/master/showroom" element={<ProtectedRoute><MasterDataView title="Showroom" type="showroom" apiKey="showrooms" /></ProtectedRoute>} />
-          <Route path="/master/scope-of-work" element={<ProtectedRoute><MasterDataView title="Scope of Work" type="scopeOfWork" apiKey="scopeOfWorks" /></ProtectedRoute>} />
-          <Route path="/master/vendor-source" element={<ProtectedRoute><MasterDataView title="Vendor Source" type="vendorSource" apiKey="vendorSources" /></ProtectedRoute>} />
-          <Route path="/master/payment-mode" element={<ProtectedRoute><MasterDataView title="Payment Mode" type="paymentMode" apiKey="paymentModes" /></ProtectedRoute>} />
-          <Route path="/master/production-hold" element={<ProtectedRoute><MasterDataView title="Production Hold" type="productionHold" apiKey="productionHolds" /></ProtectedRoute>} />
-          <Route path="/master/work-notification" element={<ProtectedRoute><MasterDataView title="Work Notification" type="workNotification" apiKey="workNotifications" /></ProtectedRoute>} />
-          <Route path="/master/project" element={<ProtectedRoute><MasterDataView title="Projects" type="project" apiKey="projects" /></ProtectedRoute>} />
-          <Route path="/master/brand" element={<ProtectedRoute><MasterDataView title="Brands" type="brand" apiKey="brands" /></ProtectedRoute>} />
-          <Route path="/master/sms-template" element={<ProtectedRoute><TemplateManagement title="SMS Templates" type="smsTemplate" /></ProtectedRoute>} />
-          <Route path="/master/email-template" element={<ProtectedRoute><TemplateManagement title="Email Templates" type="emailTemplate" /></ProtectedRoute>} />
+          {/* Master Data Routes — ADMIN ONLY */}
+          <Route path="/master/bank-details" element={<AdminRoute><BankDetails /></AdminRoute>} />
+          <Route path="/master/lead-status" element={<AdminRoute><LeadStatus /></AdminRoute>} />
+          <Route path="/master/stages" element={<AdminRoute><MasterDataView title="Stages" type="stage" apiKey="stages" /></AdminRoute>} />
+          <Route path="/master/source" element={<AdminRoute><MasterDataView title="Source" type="source" apiKey="sources" /></AdminRoute>} />
+          <Route path="/master/split-up" element={<AdminRoute><MasterDataView title="Split Up" type="splitUp" apiKey="splitUps" /></AdminRoute>} />
+          <Route path="/master/activity" element={<AdminRoute><MasterDataView title="Activity Types" type="activityType" apiKey="activityTypes" /></AdminRoute>} />
+          <Route path="/master/salutation" element={<AdminRoute><MasterDataView title="Salutation" type="salutation" apiKey="salutations" /></AdminRoute>} />
+          <Route path="/master/lead-tag" element={<AdminRoute><MasterDataView title="Lead Tags" type="leadTag" apiKey="leadTags" /></AdminRoute>} />
+          <Route path="/master/showroom" element={<AdminRoute><MasterDataView title="Showroom" type="showroom" apiKey="showrooms" /></AdminRoute>} />
+          <Route path="/master/scope-of-work" element={<AdminRoute><MasterDataView title="Scope of Work" type="scopeOfWork" apiKey="scopeOfWorks" /></AdminRoute>} />
+          <Route path="/master/vendor-source" element={<AdminRoute><MasterDataView title="Vendor Source" type="vendorSource" apiKey="vendorSources" /></AdminRoute>} />
+          <Route path="/master/payment-mode" element={<AdminRoute><MasterDataView title="Payment Mode" type="paymentMode" apiKey="paymentModes" /></AdminRoute>} />
+          <Route path="/master/production-hold" element={<AdminRoute><MasterDataView title="Production Hold" type="productionHold" apiKey="productionHolds" /></AdminRoute>} />
+          <Route path="/master/work-notification" element={<AdminRoute><MasterDataView title="Work Notification" type="workNotification" apiKey="workNotifications" /></AdminRoute>} />
+          <Route path="/master/project" element={<AdminRoute><MasterDataView title="Projects" type="project" apiKey="projects" /></AdminRoute>} />
+          <Route path="/master/brand" element={<AdminRoute><MasterDataView title="Brands" type="brand" apiKey="brands" /></AdminRoute>} />
+          <Route path="/master/sms-template" element={<AdminRoute><TemplateManagement title="SMS Templates" type="smsTemplate" /></AdminRoute>} />
+          <Route path="/master/email-template" element={<AdminRoute><TemplateManagement title="Email Templates" type="emailTemplate" /></AdminRoute>} />
           
           <Route path="*" element={<ProtectedRoute><div className="p-10 text-center text-gray-400 font-bold uppercase tracking-widest bg-white border border-gray-100 shadow-sm mt-10">Module Under Construction</div></ProtectedRoute>} />
         </Routes>

@@ -58,7 +58,7 @@ const Navbar: React.FC = () => {
 
   const menuItems: MenuItem[] = [
     { title: 'Dashboard', path: '/', icon: <Home size={18} /> },
-    { 
+    ...(user?.role === 'ADMIN' ? [{ 
       title: 'Settings', 
       path: '#', 
       icon: <Settings size={18} />,
@@ -93,7 +93,7 @@ const Navbar: React.FC = () => {
         { title: 'SMS Templates', path: '/master/sms-template' },
         { title: 'Email Templates', path: '/master/email-template' },
       ]
-    },
+    }] : []),
     { title: 'Lead Hub', path: '/leadhub', icon: <Users size={18} />, badge: stats?.freshlead || undefined },
     { title: 'Leads', path: '/leads', icon: <User size={18} />, badge: stats ? (stats.freshlead + stats.creleads + stats.yettofollow + stats.followup + stats.opportunities + stats.orderbook) : undefined },
     { 
