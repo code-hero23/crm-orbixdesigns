@@ -97,7 +97,7 @@ const Navbar: React.FC = () => {
     { title: 'Lead Hub', path: '/leadhub', icon: <Users size={18} />, badge: stats?.freshlead || undefined },
     { title: 'Leads', path: '/leads', icon: <User size={18} />, badge: stats ? (stats.freshlead + stats.creleads + stats.yettofollow + stats.followup + stats.opportunities + stats.orderbook) : undefined },
     { 
-      title: 'Tasks', 
+      title: 'Task', 
       path: '#', 
       icon: <CheckSquare size={18} />, 
       badge: stats?.internal || undefined,
@@ -106,9 +106,10 @@ const Navbar: React.FC = () => {
         { title: 'Closed Archive', path: '/closed-tasks' },
       ]
     },
-    { title: 'Showroom Visits', path: '/visits', icon: <Box size={18} />, badge: stats?.showRoomVisit || undefined },
-    { title: 'Appointments', path: '/appointment', icon: <Calendar size={18} />, badge: stats?.appointment || undefined },
-    { title: 'Reports', path: '/report', icon: <Flag size={18} /> },
+    { title: 'Showroom Visit', path: '/visits', icon: <Box size={18} />, badge: stats?.showRoomVisit || undefined },
+    { title: 'Appointment', path: '/appointment', icon: <Calendar size={18} />, badge: stats?.appointment || undefined },
+    { title: 'Reminders', path: '/reminders', icon: <Bell size={18} />, badge: 0 },
+    { title: 'Report', path: '/report', icon: <Flag size={18} /> },
   ];
 
   return (
@@ -127,6 +128,9 @@ const Navbar: React.FC = () => {
 
           {/* Topbar Right */}
           <div className="flex items-center gap-6">
+            <button className="bg-[#f05050] text-white px-3 py-1.5 text-xs font-medium rounded shadow-sm hover:opacity-90 transition-opacity">
+               Start Work
+            </button>
             <div className="relative cursor-pointer">
               <Bell size={22} className="text-gray-400" />
               <span className="absolute -top-1 -right-1 bg-danger text-white text-[10px] font-bold px-1.5 rounded-full border-2 border-white">0</span>
@@ -200,8 +204,8 @@ const Navbar: React.FC = () => {
                 >
                   {item.icon}
                   <span>{item.title}</span>
-                  {item.badge ? (
-                    <span className="ml-1 bg-danger text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                  {item.badge !== undefined ? (
+                    <span className="ml-1 bg-[#f05050] text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
                       {item.badge}
                     </span>
                   ) : null}
@@ -343,8 +347,8 @@ const Navbar: React.FC = () => {
                           {item.icon}
                           <span className="text-sm font-medium">{item.title}</span>
                         </div>
-                        {item.badge ? (
-                          <span className="bg-danger text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                        {item.badge !== undefined ? (
+                          <span className="bg-[#f05050] text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
                             {item.badge}
                           </span>
                         ) : null}
