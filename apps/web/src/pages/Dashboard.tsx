@@ -213,7 +213,7 @@ const Dashboard: React.FC = () => {
                 <Tooltip cursor={{ fill: '#f8fafc' }} />
                 <Bar dataKey="value" radius={[4, 4, 0, 0]} barSize={50}>
                   {chartData.map((_, i) => (
-                    <Cell key={i} fill={['#2089F0', '#EB4386', '#3373ED'][i % 3]} />
+                    <Cell key={i} fill="#2089F0" />
                   ))}
                 </Bar>
               </BarChart>

@@ -264,11 +264,11 @@ const Report: React.FC = () => {
               
               <div className="space-y-4">
                  {[
-                   { label: 'Fresh Leads', value: stats?.freshlead || 0, color: 'bg-green-500' },
-                   { label: 'Follow-ups', value: stats?.followup || 0, color: 'bg-blue-500' },
-                   { label: 'Opportunities', value: stats?.opportunities || 0, color: 'bg-purple-500' },
-                   { label: 'Order Booked', value: stats?.orderbook || 0, color: 'bg-amber-500' },
-                   { label: 'Disqualified', value: stats?.disqualified || 0, color: 'bg-red-500' },
+                   { label: 'Fresh Leads', value: stats?.freshlead || 0, color: 'bg-[#00BCD4]' },
+                   { label: 'Follow-ups', value: stats?.followup || 0, color: 'bg-[#EB4386]' },
+                   { label: 'Opportunities', value: stats?.opportunities || 0, color: 'bg-[#3373ED]' },
+                   { label: 'Order Booked', value: stats?.orderbook || 0, color: 'bg-[#7519C8]' },
+                   { label: 'Disqualified', value: stats?.disqualified || 0, color: 'bg-[#28C9A2]' },
                  ].map((item, i) => (
                    <div key={i} className="flex items-center justify-between group cursor-pointer hover:bg-white/5 p-2 rounded-xl transition-all">
                       <div className="flex items-center gap-3">
