@@ -67,7 +67,8 @@ export const getLeads = asyncHandler(async (req: Request, res: Response) => {
     const endOfDay = new Date(now.setHours(23, 59, 59, 999));
 
     if (timeframe === 'today') {
-      where.contactableDate = { gte: startOfDay, lte: endOfDay };
+      // Today's leads: due today OR overdue (no future ones)
+      where.contactableDate = { lte: endOfDay };
     } else if (timeframe === 'tomorrow') {
       const tomorrowStart = new Date(startOfDay);
       tomorrowStart.setDate(tomorrowStart.getDate() + 1);
@@ -82,7 +83,19 @@ export const getLeads = asyncHandler(async (req: Request, res: Response) => {
       const monthEnd = new Date(startOfDay);
       monthEnd.setMonth(monthEnd.getMonth() + 1);
       where.contactableDate = { gte: startOfDay, lte: monthEnd };
+    } else if (timeframe === 'overdue') {
+      where.contactableDate = { lt: startOfDay };
     }
+  } else {
+    // DEFAULT: When no timeframe filter is selected,
+    // hide leads that are scheduled for a FUTURE date (rescheduled follow-ups).
+    // Only show: leads with no contactableDate OR leads due today/earlier.
+    const now = new Date();
+    const endOfDay = new Date(now.setHours(23, 59, 59, 999));
+    where.OR = [
+      { contactableDate: null },
+      { contactableDate: { lte: endOfDay } },
+    ];
   }
   
   if (search) {
@@ -97,7 +110,16 @@ export const getLeads = asyncHandler(async (req: Request, res: Response) => {
       searchConditions.push({ leadId: Number(search) });
     }
 
-    where.OR = searchConditions;
+    // If we already have an OR clause (from date filter), combine using AND
+    if (where.OR) {
+      where.AND = [
+        { OR: where.OR },
+        { OR: searchConditions },
+      ];
+      delete where.OR;
+    } else {
+      where.OR = searchConditions;
+    }
   }
 
   const [data, total] = await Promise.all([

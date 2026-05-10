@@ -169,8 +169,9 @@ const Leads: React.FC = () => {
           <div className="space-y-1">
             <label className="text-[10px] font-bold text-gray-400 uppercase">Timeline</label>
             <select value={timeframe} onChange={(e) => setTimeframe(e.target.value)} className="form-control !py-1 !px-2 !text-[11px]">
-              <option value="">All</option>
-              <option value="today">Today</option>
+              <option value="">All (Due Today or Earlier)</option>
+              <option value="overdue">Overdue Only</option>
+              <option value="today">Due Today</option>
               <option value="tomorrow">Tomorrow</option>
               <option value="week">This Week</option>
               <option value="month">This Month</option>
