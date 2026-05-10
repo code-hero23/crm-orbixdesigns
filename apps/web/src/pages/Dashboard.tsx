@@ -78,7 +78,7 @@ const Dashboard: React.FC = () => {
   ];
 
   const chartData = [
-    { name: 'Total Leads', value: 247 },
+    { name: 'Total Leads', value: stats.freshlead + stats.yettofollow + stats.followup + stats.opportunities + stats.orderbook + stats.disqualified + stats.creleads + stats.fealeads + stats.designlead },
     { name: 'Followup Leads', value: stats.followup },
     { name: 'Opportunity Leads', value: stats.opportunities },
   ];
@@ -243,7 +243,7 @@ const Dashboard: React.FC = () => {
                       {['Todo', 'Inprogress', 'Completed', 'Close'].map((task, i) => (
                         <tr key={i} className="border border-gray-100">
                            <td className="p-2 text-gray-600 font-medium">{task}</td>
-                           <td className="p-2 text-center font-bold text-gray-700">{[2, 1, 4, 21][i]}</td>
+                           <td className="p-2 text-center font-bold text-gray-700">{[stats.internal, 0, 0, 0][i]}</td>
                         </tr>
                       ))}
                    </tbody>

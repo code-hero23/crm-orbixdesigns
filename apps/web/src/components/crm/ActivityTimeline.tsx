@@ -75,11 +75,6 @@ const ActivityTimeline: React.FC<ActivityTimelineProps> = ({ activities }) => {
                   </span>
                 )}
               </p>
-              <div className="flex justify-end pt-1">
-                 <button className="text-[9px] font-black bg-blue-100 text-brand px-2 py-0.5 rounded-sm hover:bg-brand hover:text-white transition-all shadow-sm">
-                   VIEW HISTORY
-                 </button>
-              </div>
             </div>
           </div>
         ))}
