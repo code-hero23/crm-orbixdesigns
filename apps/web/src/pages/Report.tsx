@@ -9,7 +9,8 @@ import {
   ArrowRight,
   BarChart2,
   Table,
-  FileSpreadsheet
+  FileSpreadsheet,
+  Users
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { leadService, reportService } from '../services/api';
@@ -43,11 +44,34 @@ type PerformanceRow = {
   orders: number;
 };
 
+type LeadsMasterRow = {
+  id: string;
+  baseDate: string;
+  baseSource: string;
+  date: string;
+  assignTo: string;
+  clientName: string;
+  phNo1: string;
+  dNo: number;
+  project: string;
+  emailId: string;
+  phNo2: string;
+  feedBack: string;
+  rating: number;
+  brand: string;
+  tag: string;
+  designOwner: string;
+  instructionPass: string;
+  cpCode: string;
+  status: string;
+};
+
 const Report: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'performance' | 'activities'>('performance');
+  const [activeTab, setActiveTab] = useState<'performance' | 'activities' | 'leadsMaster'>('performance');
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [activities, setActivities] = useState<ReportActivity[]>([]);
   const [performanceData, setPerformanceData] = useState<PerformanceRow[]>([]);
+  const [leadsMasterData, setLeadsMasterData] = useState<LeadsMasterRow[]>([]);
   const [masters, setMasters] = useState<MasterData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSearching, setIsSearching] = useState(false);
@@ -62,16 +86,18 @@ const Report: React.FC = () => {
   const fetchData = useCallback(async (searchFilters = {}) => {
     setIsSearching(true);
     try {
-      const [statsData, activitiesData, mastersData, perfData] = await Promise.all([
+      const [statsData, activitiesData, mastersData, perfData, leadsData] = await Promise.all([
         leadService.getStats(),
         leadService.getActivities(searchFilters),
         leadService.getMasters(),
-        reportService.getUserPerformance()
+        reportService.getUserPerformance(),
+        reportService.getLeadsMaster()
       ]);
       setStats(statsData);
       setActivities(activitiesData);
       setMasters(mastersData);
       setPerformanceData(perfData);
+      setLeadsMasterData(leadsData);
     } catch (error) {
       console.error('Error fetching report data:', error);
     } finally {
@@ -94,7 +120,6 @@ const Report: React.FC = () => {
 
     const wb = XLSX.utils.book_new();
 
-    // 2-level headers for complex spreadsheet merges
     const headers = [
       ["FR/CRE", "CALLS", "UPTODAY", "", "", "", "", "", "THIS WEEK", "", "", "", "", "", "PRP", "SRV", "MSMT", "ORDERS"],
       ["", "", "5", "6", "7", "8", "9", "TOTAL", "5", "6", "7", "8", "9", "TOTAL", "", "", "", ""]
@@ -114,29 +139,79 @@ const Report: React.FC = () => {
     const ws_data = [...headers, ...rows];
     const ws = XLSX.utils.aoa_to_sheet(ws_data);
 
-    // Apply exact merges matching user spreadsheet image
     ws['!merges'] = [
-      { s: { r: 0, c: 0 }, e: { r: 1, c: 0 } }, // FR/CRE name column
-      { s: { r: 0, c: 1 }, e: { r: 1, c: 1 } }, // Calls
-      { s: { r: 0, c: 2 }, e: { r: 0, c: 7 } }, // UPTODAY header
-      { s: { r: 0, c: 8 }, e: { r: 0, c: 13 } }, // THIS WEEK header
-      { s: { r: 0, c: 14 }, e: { r: 1, c: 14 } }, // PRP
-      { s: { r: 0, c: 15 }, e: { r: 1, c: 15 } }, // SRV
-      { s: { r: 0, c: 16 }, e: { r: 1, c: 16 } }, // MSMT
-      { s: { r: 0, c: 17 }, e: { r: 1, c: 17 } }  // ORDERS
+      { s: { r: 0, c: 0 }, e: { r: 1, c: 0 } },
+      { s: { r: 0, c: 1 }, e: { r: 1, c: 1 } },
+      { s: { r: 0, c: 2 }, e: { r: 0, c: 7 } },
+      { s: { r: 0, c: 8 }, e: { r: 0, c: 13 } },
+      { s: { r: 0, c: 14 }, e: { r: 1, c: 14 } },
+      { s: { r: 0, c: 15 }, e: { r: 1, c: 15 } },
+      { s: { r: 0, c: 16 }, e: { r: 1, c: 16 } },
+      { s: { r: 0, c: 17 }, e: { r: 1, c: 17 } }
     ];
 
-    // Auto-adjust column widths
     const max_len = rows.reduce((w, r) => Math.max(w, String(r[0]).length), 10);
     ws['!cols'] = [
       { wch: max_len + 4 },
       { wch: 8 },
-      ...Array(12).fill({ wch: 6 }), // narrow width for star ratings columns
+      ...Array(12).fill({ wch: 6 }),
       { wch: 8 }, { wch: 8 }, { wch: 8 }, { wch: 10 }
     ];
 
     XLSX.utils.book_append_sheet(wb, ws, "User Performance");
     XLSX.writeFile(wb, `User_Performance_Report_${new Date().toISOString().split('T')[0]}.xlsx`);
+  };
+
+  const handleExportLeadsMasterExcel = () => {
+    if (leadsMasterData.length === 0) return;
+
+    const wb = XLSX.utils.book_new();
+
+    // Merged headers with 'CRM COOKSCAPE' on top row, centered
+    const headers = [
+      ["CRM COOKSCAPE", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""],
+      ["Base Date", "Base Source", "Date", "Assign To", "Client Name", "Ph no-1", "D.No", "Project", "Email Id", "Ph no-2", "Feed Back", "Rating", "Brand", "Tag", "Design Owner", "Instruction Pass", "CP Code", "Status"]
+    ];
+
+    const rows = leadsMasterData.map(item => [
+      item.baseDate,
+      item.baseSource,
+      item.date,
+      item.assignTo,
+      item.clientName,
+      item.phNo1,
+      item.dNo,
+      item.project,
+      item.emailId,
+      item.phNo2,
+      item.feedBack,
+      item.rating,
+      item.brand,
+      item.tag,
+      item.designOwner,
+      item.instructionPass,
+      item.cpCode,
+      item.status
+    ]);
+
+    const ws_data = [...headers, ...rows];
+    const ws = XLSX.utils.aoa_to_sheet(ws_data);
+
+    // Apply the top header merge (row 0, column 0 to column 17)
+    ws['!merges'] = [
+      { s: { r: 0, c: 0 }, e: { r: 0, c: 17 } }
+    ];
+
+    // Column widths
+    ws['!cols'] = [
+      { wch: 12 }, { wch: 15 }, { wch: 12 }, { wch: 18 }, { wch: 20 },
+      { wch: 14 }, { wch: 8 }, { wch: 16 }, { wch: 22 }, { wch: 10 },
+      { wch: 25 }, { wch: 8 }, { wch: 12 }, { wch: 15 }, { wch: 18 },
+      { wch: 25 }, { wch: 10 }, { wch: 15 }
+    ];
+
+    XLSX.utils.book_append_sheet(wb, ws, "Leads Master");
+    XLSX.writeFile(wb, `Leads_Master_Report_${new Date().toISOString().split('T')[0]}.xlsx`);
   };
 
   const handleExportActivitiesCSV = () => {
@@ -177,7 +252,7 @@ const Report: React.FC = () => {
   return (
     <div className="container-fluid py-6">
       {/* Top Header Card */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-8 flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4">
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 rounded-2xl bg-brand/5 flex items-center justify-center text-brand">
             <BarChart2 size={26} />
@@ -189,7 +264,7 @@ const Report: React.FC = () => {
         </div>
 
         {/* Tab Selection */}
-        <div className="bg-gray-100/80 p-1 rounded-xl flex gap-1 border border-gray-200/50">
+        <div className="bg-gray-100/80 p-1 rounded-xl flex flex-wrap gap-1 border border-gray-200/50">
           <button 
             onClick={() => setActiveTab('performance')}
             className={`px-4 py-2 text-xs font-bold uppercase tracking-wider rounded-lg transition-all flex items-center gap-2 ${
@@ -199,6 +274,16 @@ const Report: React.FC = () => {
             }`}
           >
             <Table size={14} /> User Performance
+          </button>
+          <button 
+            onClick={() => setActiveTab('leadsMaster')}
+            className={`px-4 py-2 text-xs font-bold uppercase tracking-wider rounded-lg transition-all flex items-center gap-2 ${
+              activeTab === 'leadsMaster' 
+                ? 'bg-brand text-white shadow-md' 
+                : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50'
+            }`}
+          >
+            <Users size={14} /> Leads Master
           </button>
           <button 
             onClick={() => setActiveTab('activities')}
@@ -213,9 +298,8 @@ const Report: React.FC = () => {
         </div>
       </div>
 
-      {activeTab === 'performance' ? (
+      {activeTab === 'performance' && (
         <div className="space-y-6 animate-fadeIn">
-          {/* User Performance Grid Card */}
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
             <div className="px-6 py-5 border-b border-gray-100 bg-gray-50/50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
               <div>
@@ -233,7 +317,6 @@ const Report: React.FC = () => {
               </button>
             </div>
 
-            {/* Performance Spreadsheet Grid */}
             <div className="overflow-x-auto">
               <table className="w-full border-collapse border-spacing-0 text-left text-xs">
                 <thead>
@@ -248,14 +331,12 @@ const Report: React.FC = () => {
                     <th className="px-4 py-3 font-black text-center" rowSpan={2}>ORDERS</th>
                   </tr>
                   <tr className="bg-gray-50/60 text-gray-400 font-bold text-[10px] border-b border-gray-200">
-                    {/* UPTODAY */}
                     <th className="px-2 py-1.5 border-r border-gray-200/40 text-center font-bold bg-blue-50/10">5</th>
                     <th className="px-2 py-1.5 border-r border-gray-200/40 text-center font-bold bg-blue-50/10">6</th>
                     <th className="px-2 py-1.5 border-r border-gray-200/40 text-center font-bold bg-blue-50/10">7</th>
                     <th className="px-2 py-1.5 border-r border-gray-200/40 text-center font-bold bg-blue-50/10">8</th>
                     <th className="px-2 py-1.5 border-r border-gray-200/40 text-center font-bold bg-blue-50/10">9</th>
                     <th className="px-2 py-1.5 border-r border-gray-200/60 text-center font-black bg-blue-100/20 text-blue-700">TOTAL</th>
-                    {/* THIS WEEK */}
                     <th className="px-2 py-1.5 border-r border-gray-200/40 text-center font-bold bg-purple-50/10">5</th>
                     <th className="px-2 py-1.5 border-r border-gray-200/40 text-center font-bold bg-purple-50/10">6</th>
                     <th className="px-2 py-1.5 border-r border-gray-200/40 text-center font-bold bg-purple-50/10">7</th>
@@ -275,7 +356,6 @@ const Report: React.FC = () => {
                       </td>
                       <td className="px-4 py-3 border-r border-gray-100 text-center text-gray-600 font-bold">{row.calls}</td>
                       
-                      {/* UPTODAY star ratings */}
                       <td className="px-2 py-3 border-r border-gray-100 text-center text-gray-400">{row.upToDay['5'] || ''}</td>
                       <td className="px-2 py-3 border-r border-gray-100 text-center text-gray-400">{row.upToDay['6'] || ''}</td>
                       <td className="px-2 py-3 border-r border-gray-100 text-center text-gray-400">{row.upToDay['7'] || ''}</td>
@@ -283,7 +363,6 @@ const Report: React.FC = () => {
                       <td className="px-2 py-3 border-r border-gray-100 text-center text-gray-400">{row.upToDay['9'] || ''}</td>
                       <td className="px-2 py-3 border-r border-gray-100 text-center font-black text-blue-700 bg-blue-50/20">{row.upToDay.total || '0'}</td>
 
-                      {/* THIS WEEK star ratings */}
                       <td className="px-2 py-3 border-r border-gray-100 text-center text-gray-400">{row.thisWeek['5'] || ''}</td>
                       <td className="px-2 py-3 border-r border-gray-100 text-center text-gray-400">{row.thisWeek['6'] || ''}</td>
                       <td className="px-2 py-3 border-r border-gray-100 text-center text-gray-400">{row.thisWeek['7'] || ''}</td>
@@ -309,7 +388,114 @@ const Report: React.FC = () => {
             </div>
           </div>
         </div>
-      ) : (
+      )}
+
+      {activeTab === 'leadsMaster' && (
+        <div className="space-y-6 animate-fadeIn">
+          {/* Leads Master Grid Card */}
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="px-6 py-5 border-b border-gray-100 bg-gray-50/50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+              <div>
+                <h5 className="text-base font-bold text-gray-700 m-0 flex items-center gap-2">
+                  <FileSpreadsheet className="text-brand" size={18} /> Leads Master Database
+                </h5>
+                <p className="text-xs text-gray-400 font-bold uppercase tracking-widest mt-0.5">Exact CRM database extraction sheet</p>
+              </div>
+
+              <button 
+                onClick={handleExportLeadsMasterExcel}
+                className="bg-brand text-white px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 hover:bg-[#004d30] transition-all shadow-lg shadow-brand/20 active:scale-95 border-0"
+              >
+                <Download size={14} /> Export Leads Master (.xlsx)
+              </button>
+            </div>
+
+            {/* Leads Master Spreadsheet Grid */}
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse border-spacing-0 text-left text-xs whitespace-nowrap">
+                <thead>
+                  {/* Top Centered CRM COOKSCAPE Header */}
+                  <tr className="bg-gray-100 text-gray-800 border-b border-gray-200">
+                    <th colSpan={18} className="px-4 py-3 text-center font-black text-sm uppercase tracking-widest">
+                      CRM COOKSCAPE
+                    </th>
+                  </tr>
+                  <tr className="bg-gray-50 text-gray-500 font-black uppercase tracking-wider text-[10px] border-b border-gray-200">
+                    <th className="px-4 py-2.5 border-r border-gray-200/50">Base Date</th>
+                    <th className="px-4 py-2.5 border-r border-gray-200/50">Base Source</th>
+                    <th className="px-4 py-2.5 border-r border-gray-200/50">Date</th>
+                    <th className="px-4 py-2.5 border-r border-gray-200/50">Assign To</th>
+                    <th className="px-4 py-2.5 border-r border-gray-200/50">Client Name</th>
+                    <th className="px-4 py-2.5 border-r border-gray-200/50">Ph no-1</th>
+                    <th className="px-4 py-2.5 border-r border-gray-200/50 text-center">D.No</th>
+                    <th className="px-4 py-2.5 border-r border-gray-200/50">Project</th>
+                    <th className="px-4 py-2.5 border-r border-gray-200/50">Email Id</th>
+                    <th className="px-4 py-2.5 border-r border-gray-200/50">Ph no-2</th>
+                    <th className="px-4 py-2.5 border-r border-gray-200/50">Feed Back</th>
+                    <th className="px-4 py-2.5 border-r border-gray-200/50 text-center">Rating</th>
+                    <th className="px-4 py-2.5 border-r border-gray-200/50">Brand</th>
+                    <th className="px-4 py-2.5 border-r border-gray-200/50">Tag</th>
+                    <th className="px-4 py-2.5 border-r border-gray-200/50">Design Owner</th>
+                    <th className="px-4 py-2.5 border-r border-gray-200/50">Instruction Pass</th>
+                    <th className="px-4 py-2.5 border-r border-gray-200/50">CP Code</th>
+                    <th className="px-4 py-2.5">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100 text-gray-600 font-medium">
+                  {leadsMasterData.map((row) => (
+                    <tr key={row.id} className="hover:bg-gray-50/50 transition-colors">
+                      <td className="px-4 py-2.5 border-r border-gray-100">{row.baseDate}</td>
+                      <td className="px-4 py-2.5 border-r border-gray-100 font-bold text-gray-700">{row.baseSource}</td>
+                      <td className="px-4 py-2.5 border-r border-gray-100">{row.date}</td>
+                      <td className="px-4 py-2.5 border-r border-gray-100 font-bold text-gray-700 capitalize">{row.assignTo.toLowerCase()}</td>
+                      <td className="px-4 py-2.5 border-r border-gray-100 font-black text-gray-800 capitalize">{row.clientName.toLowerCase()}</td>
+                      <td className="px-4 py-2.5 border-r border-gray-100">{row.phNo1}</td>
+                      <td className="px-4 py-2.5 border-r border-gray-100 text-center font-bold">{row.dNo}</td>
+                      <td className="px-4 py-2.5 border-r border-gray-100">{row.project}</td>
+                      <td className="px-4 py-2.5 border-r border-gray-100 text-gray-500">{row.emailId}</td>
+                      <td className="px-4 py-2.5 border-r border-gray-100 text-gray-400">{row.phNo2 || '-'}</td>
+                      <td className="px-4 py-2.5 border-r border-gray-100 text-gray-500 max-w-[200px] overflow-hidden text-ellipsis">{row.feedBack}</td>
+                      <td className="px-4 py-2.5 border-r border-gray-100 text-center">
+                        <span className="bg-amber-50 text-amber-600 px-2 py-0.5 rounded font-black border border-amber-200/50">
+                          {row.rating || '0'} ★
+                        </span>
+                      </td>
+                      <td className="px-4 py-2.5 border-r border-gray-100">{row.brand}</td>
+                      <td className="px-4 py-2.5 border-r border-gray-100">
+                        <span className="text-[10px] bg-brand/5 text-brand px-1.5 py-0.5 rounded border border-brand/10 font-bold">
+                          {row.tag || 'N/A'}
+                        </span>
+                      </td>
+                      <td className="px-4 py-2.5 border-r border-gray-100 capitalize">{row.designOwner.toLowerCase() || '-'}</td>
+                      <td className="px-4 py-2.5 border-r border-gray-100 text-gray-500 max-w-[200px] overflow-hidden text-ellipsis">{row.instructionPass || '-'}</td>
+                      <td className="px-4 py-2.5 border-r border-gray-100 text-gray-400">{row.cpCode || '-'}</td>
+                      <td className="px-4 py-2.5 font-bold">
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                          row.status === 'Order Booked' ? 'bg-emerald-100 text-emerald-700' :
+                          row.status === 'Opportunities' ? 'bg-blue-100 text-blue-700' :
+                          row.status === 'Disqualified' ? 'bg-rose-100 text-rose-700' :
+                          'bg-gray-100 text-gray-600'
+                        }`}>
+                          {row.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                  {leadsMasterData.length === 0 && (
+                    <tr>
+                      <td colSpan={18} className="py-20 text-center text-gray-400 uppercase font-black tracking-widest text-xs">
+                        No Leads Master Records Found
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'activities' && (
         <div className="space-y-8 animate-fadeIn">
           {/* Filters Form */}
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
@@ -393,7 +579,6 @@ const Report: React.FC = () => {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 animate-fadeIn">
-            {/* Activity Timeline */}
             <div className="lg:col-span-9">
               <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
                 <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex items-center justify-between">
@@ -452,7 +637,6 @@ const Report: React.FC = () => {
               </div>
             </div>
 
-            {/* Sidebar Summary */}
             <div className="lg:col-span-3 space-y-6">
               <div className="bg-[#111] rounded-2xl shadow-xl p-6 text-white overflow-hidden relative">
                 <div className="absolute -right-8 -top-8 w-32 h-32 bg-white/5 rounded-full blur-3xl"></div>

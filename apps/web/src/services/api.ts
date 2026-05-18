@@ -222,5 +222,9 @@ export const reportService = {
   getUserPerformance: async (): Promise<any[]> => {
     const response = await axios.get(`${API_BASE_URL}/report/user-performance`);
     return response.data.data;
+  },
+  getLeadsMaster: async (): Promise<any[]> => {
+    const response = await axios.get(`${API_BASE_URL}/report/leads-master`);
+    return response.data.data;
   }
 };

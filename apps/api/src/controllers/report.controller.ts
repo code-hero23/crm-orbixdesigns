@@ -115,3 +115,47 @@ export const getUserPerformance = asyncHandler(async (req: Request, res: Respons
 
   return apiResponse.success(res, reportData, 'Performance report generated successfully');
 });
+
+export const getLeadsMasterReport = asyncHandler(async (req: Request, res: Response) => {
+  const leads = await prisma.lead.findMany({
+    include: {
+      source: true,
+      project: true,
+      brand: true,
+      status: true,
+      assignedTo: true,
+      tags: true
+    },
+    orderBy: { createdAt: 'desc' }
+  });
+
+  const reportData = leads.map(lead => {
+    // Determine Design Owner: if assigned to is DESIGNER, output name, else blank
+    const isDesigner = lead.assignedTo?.role === 'DESIGNER';
+    const designOwner = isDesigner ? lead.assignedTo?.fullName : '';
+
+    return {
+      id: lead.id,
+      baseDate: lead.dataCollected ? lead.dataCollected.toISOString().split('T')[0] : lead.createdAt.toISOString().split('T')[0],
+      baseSource: lead.source?.name || '',
+      date: lead.createdAt.toISOString().split('T')[0],
+      assignTo: lead.assignedTo?.fullName || '',
+      clientName: lead.name,
+      phNo1: lead.phone,
+      dNo: lead.leadId,
+      project: lead.project?.name || '',
+      emailId: lead.email || '',
+      phNo2: '', // Lead has only 1 phone field in Prisma schema
+      feedBack: lead.comments || '',
+      rating: lead.rating || 0,
+      brand: lead.brand?.name || '',
+      tag: lead.tags.map(t => t.name).join(', '),
+      designOwner,
+      instructionPass: lead.instructionToPass || '',
+      cpCode: '', // Mock/Empty as there is no CP Code in schema
+      status: lead.status?.name || ''
+    };
+  });
+
+  return apiResponse.success(res, reportData, 'Leads master report generated successfully');
+});
