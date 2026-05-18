@@ -236,8 +236,6 @@ const Navbar: React.FC = () => {
           <div className="ml-auto">
             <a 
               href="https://projects.orbixdesigns.com/login" 
-              target="_blank" 
-              rel="noopener noreferrer"
               className="flex items-center gap-2 px-6 py-2 bg-gradient-to-r from-[#FF512F] to-[#DD2476] text-white rounded-full font-bold text-sm transition-all hover:scale-105 hover:shadow-[0_0_20px_rgba(255,81,47,0.4)] active:scale-95"
             >
               <ArrowRightLeft size={16} />
@@ -360,8 +358,6 @@ const Navbar: React.FC = () => {
               <div className="px-4 mt-6">
                 <a 
                   href="https://projects.orbixdesigns.com/login" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
                   className="flex items-center justify-center gap-3 w-full py-4 bg-gradient-to-r from-[#FF512F] to-[#DD2476] text-white rounded-xl font-bold text-sm shadow-xl"
                 >
                   <ArrowRightLeft size={20} />
