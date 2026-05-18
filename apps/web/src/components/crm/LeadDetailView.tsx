@@ -60,9 +60,9 @@ const LeadDetailView: FC<LeadDetailViewProps> = ({ lead, onRefresh }) => {
   }
 
   return (
-    <div className="h-full bg-white border border-gray-100 shadow-sm flex flex-col overflow-hidden">
+    <div className="h-full bg-white border border-gray-100 shadow-sm overflow-y-auto">
       {/* Header Info */}
-      <div className="p-5 border-b border-gray-100">
+      <div className="p-4 md:p-5 border-b border-gray-100">
         <div className="flex justify-between items-start mb-5">
            <div className="space-y-1">
               <h2 className="text-xl font-bold text-gray-700 m-0">{lead.name}</h2>
@@ -126,7 +126,7 @@ const LeadDetailView: FC<LeadDetailViewProps> = ({ lead, onRefresh }) => {
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-5 space-y-6">
+      <div className="p-4 md:p-5 space-y-6">
         {/* Actions Grid */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
            <ActionButton icon={Edit} label="Edit" color="bg-brand" onClick={() => setIsEditModalOpen(true)} />
