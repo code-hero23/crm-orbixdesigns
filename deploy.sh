@@ -40,11 +40,6 @@ else
     echo "⚠️  PM2 process 'cookscape-api' not found. Please restart ID 7 manually."
 fi
 
-if pm2 list | grep -q "web"; then
-    echo "Restarting Web PM2 process..."
-    pm2 restart web
-fi
-
 echo "====================================================="
 echo "✅ Deployment completed successfully!"
 echo "====================================================="
