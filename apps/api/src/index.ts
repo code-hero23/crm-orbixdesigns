@@ -15,6 +15,7 @@ import taskRoutes from './routes/tasks.js';
 import masterRoutes from './routes/masters.js';
 import photoRoutes from './routes/photos.js';
 import authRoutes from './routes/auth.js';
+import reportRoutes from './routes/report.js';
 import { getDashboardStats } from './controllers/dashboard.controller.js';
 import { authenticate } from './middleware/auth.middleware.js';
 import path from 'path';
@@ -65,6 +66,7 @@ app.use('/api/v1/visits', authenticate, visitRoutes);
 app.use('/api/v1/tasks', authenticate, taskRoutes);
 app.use('/api/v1/masters', authenticate, masterRoutes);
 app.use('/api/v1/photos', authenticate, photoRoutes);
+app.use('/api/v1/report', authenticate, reportRoutes);
 
 // Dashboard
 app.get('/api/v1/dashboard/stats', authenticate, getDashboardStats);
