@@ -41,26 +41,45 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // Skip caching for chrome extensions and local dev hot-reloading
+  if (event.request.url.startsWith('chrome-extension') || event.request.url.includes('socket.io') || event.request.url.includes('__vite_ping')) {
+    return;
+  }
+
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
       if (cachedResponse) {
         // Return cached asset, but fetch updated one in background (stale-while-revalidate)
         fetch(event.request).then((networkResponse) => {
-          if (networkResponse.status === 200) {
+          if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
             caches.open(CACHE_NAME).then((cache) => {
-              cache.put(event.request, networkResponse);
+              cache.put(event.request, networkResponse.clone());
             });
           }
         }).catch(() => {/* Ignore network check errors */});
         return cachedResponse;
       }
 
-      return fetch(event.request).catch(() => {
-        // Fallback for document navigation if offline
-        if (event.request.mode === 'navigate') {
-          return caches.match('/index.html');
-        }
-      });
+      return fetch(event.request)
+        .then((response) => {
+          // Cache successful GET requests for later
+          if (response && response.status === 200 && response.type === 'basic') {
+            const responseToCache = response.clone();
+            caches.open(CACHE_NAME).then((cache) => {
+              cache.put(event.request, responseToCache);
+            });
+          }
+          return response;
+        })
+        .catch(async () => {
+          // Fallback for document navigation if offline
+          if (event.request.mode === 'navigate') {
+            const indexCache = await caches.match('/index.html');
+            if (indexCache) return indexCache;
+          }
+          // Must always return a valid Response
+          return new Response('Network error or offline', { status: 503, statusText: 'Service Unavailable' });
+        });
     })
   );
 });
