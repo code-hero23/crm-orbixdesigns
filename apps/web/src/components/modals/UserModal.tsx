@@ -11,7 +11,7 @@ interface UserModalProps {
 }
 
 const UserModal: React.FC<UserModalProps> = ({ isOpen, onClose, onSuccess, user }) => {
-  const [formData, setFormData] = useState<Partial<User>>({
+  const [formData, setFormData] = useState<Partial<User> & { password?: string }>({
     fullName: '',
     username: '',
     email: '',
