@@ -1,6 +1,7 @@
 import prisma from '../lib/prisma.js';
 import type { Request, Response } from 'express';
 import { asyncHandler, apiResponse } from '../utils/apiUtils.js';
+import bcrypt from 'bcryptjs';
 
 
 export const getUsers = asyncHandler(async (req, res) => {
@@ -16,14 +17,14 @@ export const getUsers = asyncHandler(async (req, res) => {
 });
 
 export const createUser = asyncHandler(async (req, res) => {
-  const { username, fullName, email, phone, role, showroomId, signaturePhotoId, businessHeadId, status } = req.body;
+  const { username, fullName, email, phone, role, showroomId, signaturePhotoId, businessHeadId, status, password } = req.body;
   
   if (!username || !email || !fullName) {
     return apiResponse.error(res, 'Username, Email, and Full Name are required', 400);
   }
 
   // Sanitize empty strings to null for optional relations
-  const data = {
+  const data: any = {
     username: String(username),
     fullName: String(fullName),
     email: String(email),
@@ -34,6 +35,13 @@ export const createUser = asyncHandler(async (req, res) => {
     signaturePhotoId: signaturePhotoId && signaturePhotoId !== '' ? String(signaturePhotoId) : null,
     businessHeadId: businessHeadId && businessHeadId !== '' ? String(businessHeadId) : null,
   };
+
+  if (password) {
+    data.password = await bcrypt.hash(password, 10);
+  } else {
+    // Default fallback if frontend doesn't provide one
+    data.password = await bcrypt.hash('Welcome@123', 10);
+  }
 
   try {
     const user = await prisma.user.create({
@@ -52,21 +60,26 @@ export const createUser = asyncHandler(async (req, res) => {
 
 export const updateUser = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const allowedFields = ['username', 'fullName', 'email', 'phone', 'role', 'showroomId', 'signaturePhotoId', 'businessHeadId', 'status'];
+  const allowedFields = ['username', 'fullName', 'email', 'phone', 'role', 'showroomId', 'signaturePhotoId', 'businessHeadId', 'status', 'password'];
   
   console.log('Updating user:', id, 'Body:', req.body);
   
   const updateData: any = {};
-  allowedFields.forEach(field => {
+  for (const field of allowedFields) {
     if (req.body[field] !== undefined) {
       // Convert empty strings to null for relation IDs
       if (['showroomId', 'signaturePhotoId', 'businessHeadId'].includes(field) && req.body[field] === '') {
         updateData[field] = null;
+      } else if (field === 'password' && req.body[field]) {
+        updateData[field] = await bcrypt.hash(req.body[field], 10);
+      } else if (field === 'password' && !req.body[field]) {
+        // Skip empty password updates
+        continue;
       } else {
         updateData[field] = req.body[field];
       }
     }
-  });
+  }
 
   console.log('Filtered update data:', updateData);
 
