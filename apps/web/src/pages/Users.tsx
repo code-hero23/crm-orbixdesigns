@@ -19,6 +19,7 @@ import type { User, Role } from '../types/crm';
 import UserModal from '../components/modals/UserModal';
 
 const Users = () => {
+  const API_ROOT = (import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1').replace('/api/v1', '');
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -201,7 +202,7 @@ const Users = () => {
                            {user.signaturePhoto ? (
                              <div className="h-10 w-20 bg-gray-50 rounded border border-gray-100 p-1 flex items-center justify-center">
                                <img 
-                                 src={`http://localhost:5000${user.signaturePhoto.path}`} 
+                                 src={`${API_ROOT}${user.signaturePhoto.path}`} 
                                  className="max-h-full max-w-full object-contain" 
                                  alt="Signature" 
                                />

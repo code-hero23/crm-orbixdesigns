@@ -38,11 +38,8 @@ const UserModal: React.FC<UserModalProps> = ({ isOpen, onClose, onSuccess, user 
     };
     const fetchSignaturePhotos = async () => {
       try {
-        const response = await fetch('http://localhost:5000/api/v1/photos');
-        if (response.ok) {
-          const result = await response.json();
-          setSignaturePhotos(result.data || []);
-        }
+        const photos = await leadService.getPhotos();
+        setSignaturePhotos(photos || []);
       } catch (error) {
         console.error('Error fetching signature photos:', error);
       }
