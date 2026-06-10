@@ -75,13 +75,22 @@ const ActionModal: React.FC<ActionModalProps> = ({ isOpen, onClose, onSuccess, l
       }
 
       if (type === 'FOLLOWUP' || type === 'STATUS') {
-        await leadService.updateLead(lead.id, {
+        // Build the update payload carefully
+        const updatePayload: any = {
           statusId: formData.statusId,
           nextFollowUp: formData.nextFollowUp || null,
-          contactableDate: formData.reminderSet ? (formData.nextFollowUp || null) : null,
-          assignedToId: formData.reminderSet ? (formData.reminderAssignTo || undefined) : undefined
-        });
+        };
+
+        // Only update contactableDate on FOLLOWUP when a reminder is explicitly set with a date.
+        // STATUS changes and follow-ups without a reminder leave contactableDate untouched.
+        if (type === 'FOLLOWUP' && formData.reminderSet && formData.nextFollowUp) {
+          updatePayload.contactableDate = formData.nextFollowUp;
+          updatePayload.assignedToId = formData.reminderAssignTo || undefined;
+        }
+
+        await leadService.updateLead(lead.id, updatePayload);
       }
+
 
       let activityContent = formData.content;
       if (type === 'FOLLOWUP') {
