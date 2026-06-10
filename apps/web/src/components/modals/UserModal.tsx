@@ -266,7 +266,6 @@ const UserModal: React.FC<UserModalProps> = ({ isOpen, onClose, onSuccess, user 
               </div>
           </div>
 
-          {!user && (
             <div className="space-y-6">
                <h4 className="text-[10px] font-bold text-brand uppercase tracking-[0.2em] border-b border-brand/10 pb-2">Security</h4>
                <div className="relative">
@@ -274,10 +273,11 @@ const UserModal: React.FC<UserModalProps> = ({ isOpen, onClose, onSuccess, user 
                     <Lock size={14} />
                   </span>
                   <input
-                    readOnly
                     type={showPassword ? 'text' : 'password'}
-                    value="Welcome@123"
-                    className="w-full pl-10 pr-12 py-3 rounded-lg border border-gray-100 bg-gray-50 text-xs font-bold text-gray-400 tracking-widest outline-none"
+                    value={formData.password || ''}
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    placeholder={user ? "Type a new password to reset it (leave blank to keep current)" : "Enter custom password or leave blank for default"}
+                    className="w-full pl-10 pr-12 py-3 rounded-lg border border-gray-200 focus:border-brand focus:ring-1 focus:ring-brand outline-none text-sm font-medium bg-gray-50/30 transition-all font-rubik"
                   />
                   <button 
                     type="button"
@@ -286,10 +286,11 @@ const UserModal: React.FC<UserModalProps> = ({ isOpen, onClose, onSuccess, user 
                   >
                     {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                   </button>
-                  <p className="mt-2 text-[10px] text-gray-400 font-bold italic">Note: The default password for new users is "Welcome@123"</p>
+                  <p className="mt-2 text-[10px] text-gray-400 font-bold italic">
+                    {user ? "Note: Only type a password here if you want to overwrite their existing password." : "Note: If left blank, the default password 'Welcome@123' will be used."}
+                  </p>
                </div>
             </div>
-          )}
 
           <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-xl border border-gray-100">
              <div className="flex-1">
