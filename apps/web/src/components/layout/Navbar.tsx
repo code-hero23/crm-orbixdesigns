@@ -177,7 +177,7 @@ const Navbar: React.FC = () => {
         <div className="container-fluid max-w-[1400px] mx-auto px-6 flex items-center justify-between">
           <ul className="flex items-center">
             {menuItems.map((item, idx) => {
-              if (item.title === 'Lead Hub' && user?.role !== 'ADMIN') return null;
+              if (item.title === 'Lead Hub' && user?.role !== 'ADMIN' && user?.role !== 'BUSINESS_HEAD') return null;
               return (
                 <li key={idx} className="relative group">
                 <Link 
@@ -267,7 +267,7 @@ const Navbar: React.FC = () => {
             </div>
             <div className="flex-1 overflow-y-auto py-4 scrollbar-hide">
               {menuItems.map((item, idx) => {
-                if (item.title === 'Lead Hub' && user?.role !== 'ADMIN') return null;
+                if (item.title === 'Lead Hub' && user?.role !== 'ADMIN' && user?.role !== 'BUSINESS_HEAD') return null;
                 const hasSubmenu = item.submenu && item.submenu.length > 0;
                 const isExpanded = expandedItems.includes(item.title);
                 

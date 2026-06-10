@@ -53,6 +53,23 @@ const AdminRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   );
 };
 
+// Manager route — allows ADMIN and BUSINESS_HEAD
+const ManagerRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { user } = useAuth();
+  if (!user) return <Navigate to="/login" replace />;
+  if (user.role !== 'ADMIN' && user.role !== 'BUSINESS_HEAD') return <Navigate to="/" replace />;
+  return (
+    <div className="min-h-screen bg-[#F4F7FA]">
+      <Navbar />
+      <div className="wrapper py-4">
+        <main className="max-w-[1400px] mx-auto px-4 sm:px-6">
+          {children}
+        </main>
+      </div>
+    </div>
+  );
+};
+
 const App: React.FC = () => {
   return (
     <Router>
@@ -61,7 +78,7 @@ const App: React.FC = () => {
           <Route path="/login" element={<Login />} />
           <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
           <Route path="/leads" element={<ProtectedRoute><Leads /></ProtectedRoute>} />
-          <Route path="/leadhub" element={<AdminRoute><LeadHub /></AdminRoute>} />
+          <Route path="/leadhub" element={<ManagerRoute><LeadHub /></ManagerRoute>} />
           <Route path="/customers" element={<ProtectedRoute><Customers /></ProtectedRoute>} />
           <Route path="/tasks" element={<ProtectedRoute><Tasks /></ProtectedRoute>} />
           <Route path="/closed-tasks" element={<ProtectedRoute><ClosedTasks /></ProtectedRoute>} />
