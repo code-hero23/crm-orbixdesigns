@@ -78,6 +78,7 @@ const ActionModal: React.FC<ActionModalProps> = ({ isOpen, onClose, onSuccess, l
         await leadService.updateLead(lead.id, {
           statusId: formData.statusId,
           nextFollowUp: formData.nextFollowUp || null,
+          contactableDate: formData.reminderSet ? (formData.nextFollowUp || null) : null,
           assignedToId: formData.reminderSet ? (formData.reminderAssignTo || undefined) : undefined
         });
       }
@@ -281,8 +282,9 @@ const ActionModal: React.FC<ActionModalProps> = ({ isOpen, onClose, onSuccess, l
                           </div>
                           <div className="space-y-1.5">
                             <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
-                              Scheduled Date <span className="text-brand font-bold">*</span>
+                              Next Contactable Date <span className="text-brand font-bold">*</span>
                             </label>
+                            <p className="text-[9px] text-orange-400 font-bold">⚠ Lead hidden from list until this date</p>
                             <input 
                               type="date"
                               required
