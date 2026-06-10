@@ -21,9 +21,13 @@ interface ActionModalProps {
 }
 
 const ActionModal: React.FC<ActionModalProps> = ({ isOpen, onClose, onSuccess, lead, type }) => {
+  const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1);
+  const tomorrowStr = tomorrow.toISOString().split('T')[0];
+  const today = new Date().toISOString().split('T')[0];
+
   const [formData, setFormData] = useState<any>({
     statusId: lead.statusId || '',
-    nextFollowUp: lead.nextFollowUp ? new Date(lead.nextFollowUp).toISOString().split('T')[0] : '',
+    nextFollowUp: tomorrowStr,
     content: '',
     type: 'NOTE',
     activityType: '',
@@ -49,9 +53,11 @@ const ActionModal: React.FC<ActionModalProps> = ({ isOpen, onClose, onSuccess, l
   }, [isOpen]);
 
   useEffect(() => {
+    const tmrw = new Date(); tmrw.setDate(tmrw.getDate() + 1);
+    const defaultDate = tmrw.toISOString().split('T')[0];
     setFormData({
       statusId: lead.statusId || '',
-      nextFollowUp: lead.nextFollowUp ? new Date(lead.nextFollowUp).toISOString().split('T')[0] : '',
+      nextFollowUp: defaultDate,
       content: '',
       type: type === 'FOLLOWUP' ? 'STATUS_CHANGE' : type === 'REMINDER' ? 'NOTE' : 'NOTE',
       activityType: '',
@@ -297,6 +303,7 @@ const ActionModal: React.FC<ActionModalProps> = ({ isOpen, onClose, onSuccess, l
                             <input 
                               type="date"
                               required
+                              min={today}
                               className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-brand/10 focus:border-brand outline-none transition-all font-bold text-[#313a46]"
                               value={formData.nextFollowUp}
                               onChange={(e) => setFormData({...formData, nextFollowUp: e.target.value})}
