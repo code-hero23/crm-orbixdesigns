@@ -63,6 +63,7 @@ const UserModal: React.FC<UserModalProps> = ({ isOpen, onClose, onSuccess, user 
         signaturePhotoId: user.signaturePhotoId || '',
         businessHeadId: user.businessHeadId || '',
         status: user.status ?? true,
+        password: '',
       });
     } else {
       setFormData({
@@ -74,6 +75,7 @@ const UserModal: React.FC<UserModalProps> = ({ isOpen, onClose, onSuccess, user 
         showroomId: '',
         businessHeadId: '',
         status: true,
+        password: '',
       });
     }
   }, [user, isOpen]);
@@ -85,8 +87,7 @@ const UserModal: React.FC<UserModalProps> = ({ isOpen, onClose, onSuccess, user 
       if (user?.id) {
         await leadService.updateUser(user.id, formData);
       } else {
-        // For new users, we'll set a default password or handle it as per backend
-        await leadService.createUser({ ...formData, password: 'Welcome@123' } as any);
+        await leadService.createUser(formData as any);
       }
       onSuccess();
       onClose();
