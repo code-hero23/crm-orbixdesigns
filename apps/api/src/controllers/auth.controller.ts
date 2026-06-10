@@ -1,11 +1,10 @@
+import prisma from '../lib/prisma.js';
 import type { Request, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
 import { asyncHandler, apiResponse } from '../utils/apiUtils.js';
 import jwt from 'jsonwebtoken';
 import { OAuth2Client } from 'google-auth-library';
 import bcrypt from 'bcryptjs';
 
-const prisma = new PrismaClient();
 const JWT_SECRET = process.env.JWT_SECRET || 'cookscape_crm_secret';
 const JWT_EXPIRES_IN = '7d';
 

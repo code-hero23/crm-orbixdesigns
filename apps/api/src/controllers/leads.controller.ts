@@ -1,8 +1,7 @@
+import prisma from '../lib/prisma.js';
 import type { Request, Response, NextFunction } from 'express';
-import { PrismaClient } from '@prisma/client';
 import { asyncHandler, apiResponse } from '../utils/apiUtils.js';
 
-const prisma = new PrismaClient();
 
 const normalizePhone = (phone: string): string => {
   // Remove all non-digit characters

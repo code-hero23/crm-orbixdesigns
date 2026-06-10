@@ -1,10 +1,9 @@
+import prisma from '../lib/prisma.js';
 import type { Request, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
 import path from 'path';
 import fs from 'fs';
 import { asyncHandler, apiResponse } from '../utils/apiUtils.js';
 
-const prisma = new PrismaClient();
 
 export const getPhotos = asyncHandler(async (req: Request, res: Response) => {
   const photos = await prisma.signaturePhoto.findMany({

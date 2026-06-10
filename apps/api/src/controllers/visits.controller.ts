@@ -1,7 +1,6 @@
-import { PrismaClient } from '@prisma/client';
+import prisma from '../lib/prisma.js';
 import { asyncHandler, apiResponse } from '../utils/apiUtils.js';
 
-const prisma = new PrismaClient();
 
 export const getVisits = asyncHandler(async (req, res) => {
     const { page = 1, limit = 10, leadId } = req.body;

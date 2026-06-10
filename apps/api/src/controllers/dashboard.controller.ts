@@ -1,8 +1,7 @@
+import prisma from '../lib/prisma.js';
 import type { Request, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
 import { asyncHandler, apiResponse } from '../utils/apiUtils.js';
 
-const prisma = new PrismaClient();
 
 export const getDashboardStats = asyncHandler(async (req: Request, res: Response) => {
   const [

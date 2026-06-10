@@ -1,7 +1,6 @@
-import { PrismaClient } from '@prisma/client';
+import prisma from '../lib/prisma.js';
 import { asyncHandler, apiResponse } from '../utils/apiUtils.js';
 
-const prisma = new PrismaClient();
 
 // Whitelist of models that can be managed via master CRUD
 const VALID_MASTER_MODELS = [
