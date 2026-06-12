@@ -37,6 +37,14 @@ const LeadModal: React.FC<LeadModalProps> = ({ isOpen, onClose, onSuccess, lead 
     if (isOpen) fetchMasters();
   }, [isOpen]);
 
+  const toLocalISOString = (dateString?: string | null) => {
+    if (!dateString) return '';
+    const d = new Date(dateString);
+    if (isNaN(d.getTime())) return '';
+    const tzOffset = d.getTimezoneOffset() * 60000;
+    return new Date(d.getTime() - tzOffset).toISOString().slice(0, 16);
+  };
+
   useEffect(() => {
     if (lead) {
       setFormData({
@@ -53,7 +61,7 @@ const LeadModal: React.FC<LeadModalProps> = ({ isOpen, onClose, onSuccess, lead 
         comments: lead.comments || '',
         instructionToPass: lead.instructionToPass || '',
         dataCollected: lead.dataCollected ? new Date(lead.dataCollected).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
-        contactableDate: lead.contactableDate ? new Date(lead.contactableDate).toISOString().slice(0, 16) : '',
+        contactableDate: toLocalISOString(lead.contactableDate),
       });
     } else {
         setFormData({
@@ -79,10 +87,14 @@ const LeadModal: React.FC<LeadModalProps> = ({ isOpen, onClose, onSuccess, lead 
     e.preventDefault();
     setIsSubmitting(true);
     try {
+      const payload = {
+        ...formData,
+        contactableDate: formData.contactableDate ? new Date(formData.contactableDate).toISOString() : null,
+      };
       if (lead?.id) {
-        await (leadService as any).updateLead(lead.id, formData);
+        await (leadService as any).updateLead(lead.id, payload);
       } else {
-        await leadService.createLead(formData);
+        await leadService.createLead(payload);
       }
       onSuccess();
       onClose();

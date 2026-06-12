@@ -34,13 +34,21 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({ isOpen, onClose, on
     if (isOpen) fetchMasters();
   }, [isOpen]);
 
+  const toLocalISOString = (dateString?: string | null) => {
+    if (!dateString) return '';
+    const d = new Date(dateString);
+    if (isNaN(d.getTime())) return '';
+    const tzOffset = d.getTimezoneOffset() * 60000;
+    return new Date(d.getTime() - tzOffset).toISOString().slice(0, 16);
+  };
+
   useEffect(() => {
     if (appointment) {
       setFormData({
         leadId: appointment.leadId || '',
         showroomId: appointment.showroomId || '',
-        appointmentDate: appointment.appointmentDate ? new Date(appointment.appointmentDate).toISOString().slice(0, 16) : '',
-        visitDate: appointment.visitDate ? new Date(appointment.visitDate).toISOString().slice(0, 16) : '',
+        appointmentDate: toLocalISOString(appointment.appointmentDate),
+        visitDate: toLocalISOString(appointment.visitDate),
         status: appointment.status || 'Scheduled',
         comments: appointment.comments || ''
       });

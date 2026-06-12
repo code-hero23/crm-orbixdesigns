@@ -90,7 +90,8 @@ const ActionModal: React.FC<ActionModalProps> = ({ isOpen, onClose, onSuccess, l
         // Only update contactableDate on FOLLOWUP when a reminder is explicitly set with a date.
         // STATUS changes and follow-ups without a reminder leave contactableDate untouched.
         if (type === 'FOLLOWUP' && formData.reminderSet && formData.nextFollowUp) {
-          updatePayload.contactableDate = formData.nextFollowUp;
+          const localMidnight = new Date(formData.nextFollowUp + 'T00:00:00');
+          updatePayload.contactableDate = isNaN(localMidnight.getTime()) ? formData.nextFollowUp : localMidnight.toISOString();
           updatePayload.assignedToId = formData.reminderAssignTo || undefined;
         }
 
