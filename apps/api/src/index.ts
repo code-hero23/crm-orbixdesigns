@@ -19,6 +19,7 @@ import reportRoutes from './routes/report.js';
 import { getDashboardStats } from './controllers/dashboard.controller.js';
 import { authenticate } from './middleware/auth.middleware.js';
 import path from 'path';
+import { createWhatsAppLead } from './controllers/whatsapp.controller.js';
 
 dotenv.config();
 
@@ -58,6 +59,7 @@ app.use(express.static(path.join(process.cwd(), 'public')));
 
 // API Routes
 app.use('/api/v1/auth', authRoutes); // Unprotected
+app.post('/api/v1/leads/whatsapp', createWhatsAppLead); // Public WhatsApp intake
 
 // Protected API Routes
 app.use('/api/v1/leads', authenticate, leadRoutes);
