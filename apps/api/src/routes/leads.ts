@@ -1,5 +1,5 @@
 import express from 'express';
-import { getLeads, updateLead, assignLead, createLead, getContactableCounts, getLead, addActivity, bulkAssignLeads, getAllActivities } from '../controllers/leads.controller.js';
+import { getLeads, updateLead, assignLead, createLead, getContactableCounts, getLead, addActivity, bulkAssignLeads, bulkUploadLeads, getAllActivities, deleteLead, bulkDeleteLeads } from '../controllers/leads.controller.js';
 
 const router = express.Router();
 
@@ -10,6 +10,9 @@ router.get('/:id', getLead);
 router.put('/:id', updateLead);
 router.put('/:id/assign', assignLead);
 router.post('/bulk-assign', bulkAssignLeads);
+router.post('/bulk-upload', bulkUploadLeads);
+router.post('/bulk-delete', bulkDeleteLeads);
+router.delete('/:id', deleteLead);
 router.post('/:id/activities', addActivity);
 router.post('/activities', getAllActivities);
 

@@ -134,6 +134,7 @@ export const getLeads = asyncHandler(async (req: Request, res: Response) => {
         tags: true,
         currentStage: true,
         assignedTo: { select: { id: true, fullName: true, role: true } },
+        activities: { orderBy: { createdAt: 'desc' }, include: { user: true } },
       },
       orderBy: { createdAt: 'desc' },
     }),
@@ -503,4 +504,297 @@ export const bulkAssignLeads = asyncHandler(async (req: Request, res: Response) 
   await prisma.leadActivity.createMany({ data: activities });
 
   apiResponse.success(res, null, `Successfully assigned ${leadIds.length} leads`);
+});
+
+export const bulkUploadLeads = asyncHandler(async (req: Request, res: Response) => {
+  const { leads } = req.body;
+
+  if (!leads || !Array.isArray(leads) || leads.length === 0) {
+    return apiResponse.error(res, 'No lead records found in upload', 400);
+  }
+
+  const adminUser = await prisma.user.findFirst({ where: { role: 'ADMIN' } });
+  const createdById = (req as any).user?.id || adminUser?.id;
+  if (!createdById) {
+    return apiResponse.error(res, 'No admin user found to attribute uploaded leads', 400);
+  }
+
+  const [allStatuses, allBrands, allProjects, allSources, allShowrooms, allUsers] = await Promise.all([
+    prisma.leadStatus.findMany(),
+    prisma.brand.findMany(),
+    prisma.project.findMany(),
+    prisma.source.findMany(),
+    prisma.showroom.findMany(),
+    prisma.user.findMany(),
+  ]);
+
+  const normalizeStatusName = (raw: string): string => {
+    const s = raw.trim().toLowerCase();
+    if (s === 'fresh' || s === 'fresh leads' || s === 'fresh lead') return 'Fresh';
+    if (s === 'yet to follow-up' || s === 'yet to followup' || s === 'yet to follow up') return 'Yet To Follow-up';
+    if (s === 'follow-up' || s === 'follow-ups' || s === 'followup' || s === 'follow ups' || s === 'follow up') return 'Follow-up';
+    if (s === 'opportunities' || s === 'opportunity') return 'Opportunities';
+    if (s === 'order booked' || s === 'order book') return 'Order Booked';
+    if (s === 'disqualified') return 'Disqualified';
+    if (s === 'showroom visit' || s === 'showroom visits') return 'Showroom Visit';
+    if (s === 'appointment fix' || s === 'appointment' || s === 'appointments') return 'Appointment Fix';
+    return raw.trim() || 'Fresh';
+  };
+
+  let createdCount = 0;
+  let updatedCount = 0;
+  let visitsCreated = 0;
+  let appointmentsCreated = 0;
+
+  for (const row of leads) {
+    const getField = (keys: string[]) => {
+      for (const k of Object.keys(row)) {
+        const cleanKey = k.trim().toLowerCase().replace(/[\s_-]+/g, '');
+        if (keys.includes(cleanKey)) return row[k];
+      }
+      return undefined;
+    };
+
+    const rawName = getField(['name', 'leadname', 'customername', 'fullname']);
+    const rawPhone = getField(['phone', 'phonenumber', 'mobile', 'contact']);
+    if (!rawName || !rawPhone) continue;
+
+    const name = String(rawName).trim();
+    const phone = normalizePhone(String(rawPhone));
+    if (!phone) continue;
+
+    const email = getField(['email', 'emailaddress']) ? String(getField(['email', 'emailaddress'])).trim() : null;
+    const rawStatus = String(getField(['status', 'leadstatus']) || 'Fresh');
+    const canonicalStatusName = normalizeStatusName(rawStatus);
+
+    let statusObj = allStatuses.find(s => s.name.toLowerCase() === canonicalStatusName.toLowerCase());
+    if (!statusObj) {
+      statusObj = await prisma.leadStatus.upsert({
+        where: { name: canonicalStatusName },
+        update: {},
+        create: { name: canonicalStatusName },
+      });
+      allStatuses.push(statusObj);
+    }
+
+    const rawBrand = getField(['brand', 'brandname']);
+    let brandObj = rawBrand
+      ? allBrands.find(b => b.name.toLowerCase() === String(rawBrand).trim().toLowerCase())
+      : allBrands[0];
+    if (!brandObj && rawBrand) {
+      brandObj = await prisma.brand.upsert({
+        where: { name: String(rawBrand).trim() },
+        update: {},
+        create: { name: String(rawBrand).trim() },
+      });
+      allBrands.push(brandObj);
+    }
+
+    const rawProject = getField(['project', 'projectname']);
+    let projectObj = rawProject
+      ? allProjects.find(p => p.name.toLowerCase() === String(rawProject).trim().toLowerCase())
+      : allProjects[0];
+    if (!projectObj && rawProject) {
+      projectObj = await prisma.project.upsert({
+        where: { name: String(rawProject).trim() },
+        update: {},
+        create: { name: String(rawProject).trim() },
+      });
+      allProjects.push(projectObj);
+    }
+
+    const rawSource = getField(['source', 'leadsource', 'sourcename']);
+    let sourceObj = rawSource
+      ? allSources.find(s => s.name.toLowerCase() === String(rawSource).trim().toLowerCase())
+      : allSources[0];
+    if (!sourceObj && rawSource) {
+      sourceObj = await prisma.source.upsert({
+        where: { name: String(rawSource).trim() },
+        update: {},
+        create: { name: String(rawSource).trim() },
+      });
+      allSources.push(sourceObj);
+    }
+
+    const rawAssigned = getField(['assignedto', 'executive', 'cre', 'user']);
+    const assignedUser = rawAssigned
+      ? allUsers.find(
+          u =>
+            u.fullName.toLowerCase() === String(rawAssigned).trim().toLowerCase() ||
+            u.username.toLowerCase() === String(rawAssigned).trim().toLowerCase() ||
+            u.email.toLowerCase() === String(rawAssigned).trim().toLowerCase()
+        )
+      : undefined;
+
+    const rawRating = getField(['rating', 'stars']);
+    const rating = rawRating !== undefined && !isNaN(Number(rawRating)) ? Number(rawRating) : 4;
+    const rawComments = getField(['comments', 'comment', 'command', 'commands', 'notes', 'remarks']);
+    const comments = rawComments ? String(rawComments).trim() : null;
+    const rawInstruction = getField(['instructiontopass', 'instruction', 'instructions', 'instructionstopass', 'passinstruction']);
+    const instructionToPass = rawInstruction ? String(rawInstruction).trim() : comments;
+
+    let lead = await prisma.lead.findFirst({ where: { phone: { contains: phone } } });
+    if (lead) {
+      lead = await prisma.lead.update({
+        where: { id: lead.id },
+        data: {
+          name,
+          email: email ?? lead.email,
+          statusId: statusObj.id,
+          brandId: brandObj?.id ?? lead.brandId,
+          projectId: projectObj?.id ?? lead.projectId,
+          sourceId: sourceObj?.id ?? lead.sourceId,
+          rating,
+          comments: comments ?? lead.comments,
+          instructionToPass: instructionToPass ?? lead.instructionToPass,
+          assignedToId: assignedUser?.id ?? lead.assignedToId,
+        },
+      });
+      if (comments) {
+        await prisma.leadActivity.create({
+          data: {
+            leadId: lead.id,
+            type: 'NOTE',
+            content: comments,
+            userId: createdById,
+          },
+        });
+      }
+      updatedCount++;
+    } else {
+      lead = await prisma.lead.create({
+        data: {
+          name,
+          email,
+          phone,
+          statusId: statusObj.id,
+          brandId: brandObj?.id ?? null,
+          projectId: projectObj?.id ?? null,
+          sourceId: sourceObj?.id ?? null,
+          rating,
+          comments,
+          instructionToPass,
+          assignedToId: assignedUser?.id ?? null,
+          createdById,
+        },
+      });
+      await prisma.leadActivity.create({
+        data: {
+          leadId: lead.id,
+          type: 'SYSTEM',
+          content: `Lead imported via Bulk File Upload (${canonicalStatusName})`,
+          userId: createdById,
+        },
+      });
+      if (comments) {
+        await prisma.leadActivity.create({
+          data: {
+            leadId: lead.id,
+            type: 'NOTE',
+            content: comments,
+            userId: createdById,
+          },
+        });
+      }
+      createdCount++;
+    }
+
+    const rawVisitDate = getField(['visitdate', 'showroomvisitdate']);
+    const rawShowroom = getField(['showroom', 'showroomname']);
+    if (canonicalStatusName === 'Showroom Visit' || rawVisitDate) {
+      let showroomObj = rawShowroom
+        ? allShowrooms.find(s => s.name.toLowerCase().includes(String(rawShowroom).trim().toLowerCase()))
+        : allShowrooms[0];
+      if (!showroomObj && allShowrooms.length > 0) {
+        showroomObj = allShowrooms[0];
+      }
+      if (showroomObj) {
+        const parsedVisitDate = rawVisitDate && !isNaN(Date.parse(String(rawVisitDate)))
+          ? new Date(String(rawVisitDate))
+          : new Date();
+        await prisma.showroomVisit.create({
+          data: {
+            leadId: lead.id,
+            showroomId: showroomObj.id,
+            visitDate: parsedVisitDate,
+            comments: comments || `Showroom visit at ${showroomObj.name}`,
+          },
+        });
+        visitsCreated++;
+      }
+    }
+
+    const rawAppointmentDate = getField(['appointmentdate', 'appointment']);
+    const rawLocation = getField(['location', 'appointmentlocation']);
+    if (canonicalStatusName === 'Appointment Fix' || rawAppointmentDate) {
+      const parsedAppDate = rawAppointmentDate && !isNaN(Date.parse(String(rawAppointmentDate)))
+        ? new Date(String(rawAppointmentDate))
+        : new Date(Date.now() + 24 * 60 * 60 * 1000);
+      await prisma.appointment.create({
+        data: {
+          leadId: lead.id,
+          appointmentDate: parsedAppDate,
+          location: rawLocation ? String(rawLocation).trim() : (rawShowroom ? String(rawShowroom).trim() : 'Client Site / Showroom'),
+          comments: comments || 'Appointment scheduled via Bulk Upload',
+          status: 'Scheduled',
+        },
+      });
+      appointmentsCreated++;
+    }
+  }
+
+  apiResponse.success(
+    res,
+    { createdCount, updatedCount, visitsCreated, appointmentsCreated },
+    `Imported ${createdCount} new leads (${updatedCount} updated, ${visitsCreated} showroom visits, ${appointmentsCreated} appointments)`
+  );
+});
+
+export const deleteLead = asyncHandler(async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const user = (req as any).user;
+
+  if (user?.role !== 'ADMIN') {
+    return apiResponse.error(res, 'Access denied. Only administrators can delete leads.', 403);
+  }
+
+  const existingLead = await prisma.lead.findUnique({ where: { id: String(id) } });
+  if (!existingLead) {
+    return apiResponse.error(res, 'Lead not found', 404);
+  }
+
+  await prisma.$transaction([
+    prisma.leadActivity.deleteMany({ where: { leadId: String(id) } }),
+    prisma.task.deleteMany({ where: { leadId: String(id) } }),
+    prisma.appointment.deleteMany({ where: { leadId: String(id) } }),
+    prisma.showroomVisit.deleteMany({ where: { leadId: String(id) } }),
+    prisma.lead.delete({ where: { id: String(id) } }),
+  ]);
+
+  apiResponse.success(res, null, 'Lead deleted successfully');
+});
+
+export const bulkDeleteLeads = asyncHandler(async (req: Request, res: Response) => {
+  const { leadIds } = req.body;
+  const user = (req as any).user;
+
+  if (user?.role !== 'ADMIN') {
+    return apiResponse.error(res, 'Access denied. Only administrators can delete leads.', 403);
+  }
+
+  if (!leadIds || !Array.isArray(leadIds) || leadIds.length === 0) {
+    return apiResponse.error(res, 'Lead IDs are required', 400);
+  }
+
+  const stringIds = leadIds.map(id => String(id));
+
+  await prisma.$transaction([
+    prisma.leadActivity.deleteMany({ where: { leadId: { in: stringIds } } }),
+    prisma.task.deleteMany({ where: { leadId: { in: stringIds } } }),
+    prisma.appointment.deleteMany({ where: { leadId: { in: stringIds } } }),
+    prisma.showroomVisit.deleteMany({ where: { leadId: { in: stringIds } } }),
+    prisma.lead.deleteMany({ where: { id: { in: stringIds } } }),
+  ]);
+
+  apiResponse.success(res, null, `Successfully deleted ${leadIds.length} leads`);
 });

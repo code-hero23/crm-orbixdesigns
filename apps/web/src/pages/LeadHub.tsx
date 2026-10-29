@@ -9,11 +9,16 @@ import {
   RefreshCw, 
   FileUp, 
   Upload,
+  Download,
   ChevronRight 
 } from 'lucide-react';
+import * as XLSX from 'xlsx';
+import { Trash2 } from 'lucide-react';
 import LeadModal from '../components/modals/LeadModal';
+import { useAuth } from '../contexts/AuthContext';
 
 const LeadHub: React.FC = () => {
+  const { user: currentUser } = useAuth();
   const [leads, setLeads] = useState<Lead[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -91,11 +96,177 @@ const LeadHub: React.FC = () => {
     }
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
-      alert(`File "${e.target.files[0].name}" uploaded successfully!`);
-      e.target.value = '';
+      const file = e.target.files[0];
+      try {
+        const buffer = await file.arrayBuffer();
+        const workbook = XLSX.read(buffer, { type: 'array' });
+        const firstSheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[firstSheetName];
+        const rows = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
+
+        if (!rows || rows.length === 0) {
+          alert('The uploaded file appears to be empty.');
+          e.target.value = '';
+          return;
+        }
+
+        const res = await leadService.bulkUploadLeads(rows);
+        alert(res.message || `File "${file.name}" imported successfully!`);
+        await fetchLeads();
+      } catch (err: any) {
+        console.error('Upload error:', err);
+        alert(err?.response?.data?.message || 'Failed to import leads from file.');
+      } finally {
+        e.target.value = '';
+      }
     }
+  };
+
+  const handleDownloadSample = () => {
+    const sampleRows = [
+      {
+        Name: 'Vikram Aditya',
+        Phone: '9840110001',
+        Email: 'vikram.aditya@example.com',
+        Status: 'Fresh',
+        Brand: 'Cookscape',
+        Project: 'Modular Kitchen',
+        Source: 'Google Ads',
+        Rating: 5,
+        Showroom: 'Chennai - OMR',
+        VisitDate: '',
+        AppointmentDate: '',
+        Location: 'OMR, Chennai',
+        AssignedTo: 'Arun Kumar',
+        InstructionToPass: 'Share modular kitchen brochure and schedule initial call',
+        Comments: 'New inquiry for L-shaped modular kitchen'
+      },
+      {
+        Name: 'Kavitha Krishnan',
+        Phone: '9840110002',
+        Email: 'kavitha.k@example.com',
+        Status: 'Yet To Follow-up',
+        Brand: 'Orbix',
+        Project: 'Complete Home',
+        Source: 'Website',
+        Rating: 4,
+        Showroom: 'Chennai - Porur',
+        VisitDate: '',
+        AppointmentDate: '',
+        Location: 'Porur, Chennai',
+        AssignedTo: 'Deepika S',
+        InstructionToPass: 'Call customer between 10 AM and 12 PM tomorrow',
+        Comments: 'Requested callback tomorrow morning'
+      },
+      {
+        Name: 'Ramesh Babu',
+        Phone: '9840110003',
+        Email: 'ramesh.babu@example.com',
+        Status: 'Follow-up',
+        Brand: 'Cookscape',
+        Project: 'Wardrobe',
+        Source: 'Facebook',
+        Rating: 4,
+        Showroom: 'Bangalore - HSR',
+        VisitDate: '',
+        AppointmentDate: '',
+        Location: 'HSR Layout, Bangalore',
+        AssignedTo: 'Manoj Ray',
+        InstructionToPass: 'Follow up on laminate vs acrylic finish preference',
+        Comments: 'Shared initial quotation, following up on material selection'
+      },
+      {
+        Name: 'Lakshmi Narayanan',
+        Phone: '9840110004',
+        Email: 'lakshmi.n@example.com',
+        Status: 'Opportunities',
+        Brand: 'Orbix',
+        Project: 'Interior Design',
+        Source: 'Instagram',
+        Rating: 5,
+        Showroom: 'Chennai - Nandhanam(MTRS)',
+        VisitDate: '',
+        AppointmentDate: '',
+        Location: 'Adyar, Chennai',
+        AssignedTo: 'Priya Mani',
+        InstructionToPass: 'Assign senior designer to prepare 3D elevation and BOQ',
+        Comments: 'High-value 3BHK full interior opportunity, floor plan received'
+      },
+      {
+        Name: 'Sanjay Subramanian',
+        Phone: '9840110005',
+        Email: 'sanjay.s@example.com',
+        Status: 'Order Booked',
+        Brand: 'Cookscape',
+        Project: 'Complete Home',
+        Source: 'Referral',
+        Rating: 5,
+        Showroom: 'Chennai - OMR',
+        VisitDate: '',
+        AppointmentDate: '',
+        Location: 'ECR, Chennai',
+        AssignedTo: 'Arun Kumar',
+        InstructionToPass: 'Coordinate with feasibility team for final site marking',
+        Comments: 'Advance payment received, order booked'
+      },
+      {
+        Name: 'Divya Darshini',
+        Phone: '9840110006',
+        Email: 'divya.d@example.com',
+        Status: 'Showroom Visit',
+        Brand: 'Cookscape',
+        Project: 'Modular Kitchen',
+        Source: 'Walk-in',
+        Rating: 5,
+        Showroom: 'Chennai - OMR',
+        VisitDate: '2026-10-30 11:00',
+        AppointmentDate: '',
+        Location: 'OMR Showroom',
+        AssignedTo: 'Suresh G',
+        InstructionToPass: 'Prepare acrylic and PU shutter samples for OMR showroom demo',
+        Comments: 'Visited Chennai OMR showroom to inspect acrylic finishes'
+      },
+      {
+        Name: 'Prashanth Raj',
+        Phone: '9840110007',
+        Email: 'prashanth.r@example.com',
+        Status: 'Appointment Fix',
+        Brand: 'Orbix',
+        Project: 'Renovation',
+        Source: 'Google Ads',
+        Rating: 4,
+        Showroom: 'Coimbatore - Covai',
+        VisitDate: '',
+        AppointmentDate: '2026-10-31 15:30',
+        Location: 'RS Puram, Coimbatore',
+        AssignedTo: 'Karthik R',
+        InstructionToPass: 'Carry laser measurement kit for site measurement at RS Puram',
+        Comments: 'Site measurement appointment fixed with client'
+      },
+      {
+        Name: 'Mohan Kumar',
+        Phone: '9840110008',
+        Email: 'mohan.k@example.com',
+        Status: 'Disqualified',
+        Brand: 'Cookscape',
+        Project: 'Wardrobe',
+        Source: 'Facebook',
+        Rating: 1,
+        Showroom: 'Chennai - Porur',
+        VisitDate: '',
+        AppointmentDate: '',
+        Location: 'Outside Service Area',
+        AssignedTo: 'Deepika S',
+        InstructionToPass: 'No further action needed - outside serviceable city limits',
+        Comments: 'Disqualified - Requirement outside serviceable region'
+      }
+    ];
+    const worksheet = XLSX.utils.json_to_sheet(sampleRows);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Sample Leads');
+    XLSX.writeFile(workbook, 'sample_leads_all_statuses.xlsx');
   };
 
   const handleBulkAssign = async () => {
@@ -131,6 +302,33 @@ const LeadHub: React.FC = () => {
     setSelectedLeads(prev => 
       prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
     );
+  };
+
+  const handleDeleteLead = async (id: string, name: string) => {
+    if (!window.confirm(`Are you sure you want to permanently delete lead "${name}"?`)) {
+      return;
+    }
+    try {
+      await leadService.deleteLead(id);
+      alert('Lead deleted successfully');
+      fetchLeads();
+    } catch (err: any) {
+      alert(err?.response?.data?.message || 'Failed to delete lead');
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (!window.confirm(`Are you sure you want to permanently delete ${selectedLeads.length} leads?`)) {
+      return;
+    }
+    try {
+      await leadService.bulkDeleteLeads(selectedLeads);
+      alert(`Successfully deleted ${selectedLeads.length} leads`);
+      setSelectedLeads([]);
+      fetchLeads();
+    } catch (err: any) {
+      alert(err?.response?.data?.message || 'Failed to delete selected leads');
+    }
   };
 
   const columns: Column[] = [
@@ -221,15 +419,27 @@ const LeadHub: React.FC = () => {
       header: 'Action',
       accessor: 'actions',
       render: (row: Lead) => (
-        <button 
-          onClick={() => {
-            setLeadToEdit(row);
-            setIsModalOpen(true);
-          }}
-          className="text-gray-400 hover:text-brand transition-colors"
-        >
-          <ChevronRight size={16} />
-        </button>
+        <div className="flex items-center gap-1">
+          <button 
+            onClick={() => {
+              setLeadToEdit(row);
+              setIsModalOpen(true);
+            }}
+            className="text-gray-400 hover:text-brand transition-colors p-1"
+            title="Edit Lead"
+          >
+            <ChevronRight size={16} />
+          </button>
+          {currentUser?.role === 'ADMIN' && (
+            <button
+              onClick={() => handleDeleteLead(row.id, row.name)}
+              className="text-gray-300 hover:text-red-600 transition-colors p-1"
+              title="Delete Lead"
+            >
+              <Trash2 size={14} />
+            </button>
+          )}
+        </div>
       )
     }
   ];
@@ -252,6 +462,12 @@ const LeadHub: React.FC = () => {
             className="btn-custom !bg-brand hover:!bg-[#004d30] !rounded-full !px-3 sm:!px-4 !py-1.5 text-[10px] sm:text-[11px] flex items-center justify-center gap-1.5 sm:gap-2"
           >
             <RefreshCw size={14} className="shrink-0" /> <span className="truncate">Update Projects</span>
+          </button>
+          <button 
+            onClick={handleDownloadSample}
+            className="btn-custom !bg-[#313a46] hover:!bg-black !rounded-full !px-3 sm:!px-4 !py-1.5 text-[10px] sm:text-[11px] flex items-center justify-center gap-1.5 sm:gap-2"
+          >
+            <Download size={14} className="shrink-0" /> <span className="truncate">Sample Sheet</span>
           </button>
           <button 
             onClick={handleFileUploadClick}
@@ -322,6 +538,14 @@ const LeadHub: React.FC = () => {
                   >
                     Bulk Assign
                   </button>
+                  {currentUser?.role === 'ADMIN' && (
+                    <button 
+                      onClick={handleBulkDelete}
+                      className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-[10px] font-bold uppercase flex items-center gap-1"
+                    >
+                      <Trash2 size={12} /> Bulk Delete
+                    </button>
+                  )}
                   <button className="text-gray-400 hover:text-white text-[10px] font-bold uppercase" onClick={() => setSelectedLeads([])}>Cancel</button>
               </div>
           </div>

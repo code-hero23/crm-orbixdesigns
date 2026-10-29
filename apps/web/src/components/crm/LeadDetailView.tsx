@@ -1,5 +1,6 @@
 import { useState, type ElementType, type FC } from 'react';
 import { 
+  Trash2,
   Mail, 
   Calendar, 
   Star, 
@@ -18,6 +19,7 @@ import {
   Smartphone,
   LayoutGrid
 } from 'lucide-react';
+import { leadService } from '../../services/api';
 import type { Lead } from '../../types/crm';
 import ActionModal from '../modals/ActionModal';
 import LeadModal from '../modals/LeadModal';
@@ -49,6 +51,20 @@ const LeadDetailView: FC<LeadDetailViewProps> = ({ lead, onRefresh }) => {
   const { user: currentUser } = useAuth();
   const [modalType, setModalType] = useState<'FOLLOWUP' | 'REMINDER' | 'STATUS' | 'NOTE' | 'APPOINTMENT' | 'SWITCH_USER' | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+
+  const handleDelete = async () => {
+    if (!lead) return;
+    if (!window.confirm(`Are you sure you want to permanently delete lead "${lead.name}"?`)) {
+      return;
+    }
+    try {
+      await leadService.deleteLead(lead.id);
+      alert('Lead deleted successfully');
+      if (onRefresh) onRefresh();
+    } catch (err: any) {
+      alert(err?.response?.data?.message || 'Failed to delete lead');
+    }
+  };
 
   if (!lead) {
     return (
@@ -114,8 +130,12 @@ const LeadDetailView: FC<LeadDetailViewProps> = ({ lead, onRefresh }) => {
               </p>
            </div>
             <div className="space-y-0.5 col-span-2 md:col-span-3 mt-2">
-              <label className="text-[9px] font-bold text-gray-400 uppercase">Instructions</label>
+              <label className="text-[9px] font-bold text-gray-400 uppercase">Instructions to Pass</label>
               <p className="text-[11px] font-bold text-gray-700 bg-gray-50 p-2 rounded border border-gray-100 italic">{lead.instructionToPass || 'No instructions provided'}</p>
+            </div>
+            <div className="space-y-0.5 col-span-2 md:col-span-3 mt-1">
+              <label className="text-[9px] font-bold text-gray-400 uppercase">Comments</label>
+              <p className="text-[11px] font-bold text-gray-700 bg-gray-50 p-2 rounded border border-gray-100 italic">{lead.comments || 'No comments provided'}</p>
             </div>
             {lead.brand?.logo && (
               <div className="col-span-2 md:col-span-3 mt-2 pt-2 border-t border-gray-50">
@@ -140,6 +160,7 @@ const LeadDetailView: FC<LeadDetailViewProps> = ({ lead, onRefresh }) => {
            <ActionButton icon={MessageSquare} label="SMS" color="bg-brand" onClick={() => setModalType('NOTE')} />
            <ActionButton icon={LayoutGrid} label="Showroom" color="bg-brand" onClick={() => setModalType('APPOINTMENT')} />
            {currentUser?.role === 'ADMIN' && <ActionButton icon={UserPlus} label="Switch" color="bg-brand" onClick={() => setModalType('SWITCH_USER')} />}
+           {currentUser?.role === 'ADMIN' && <ActionButton icon={Trash2} label="Delete" color="bg-red-600 hover:bg-red-700" onClick={handleDelete} />}
            <ActionButton icon={CheckCircle} label="KYC Form" color="bg-brand" onClick={() => setModalType('STATUS')} />
         </div>
 
