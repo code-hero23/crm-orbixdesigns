@@ -1,6 +1,7 @@
 import prisma from '../lib/prisma.js';
 import type { Request, Response, NextFunction } from 'express';
 import { asyncHandler, apiResponse } from '../utils/apiUtils.js';
+import { sendMetaConversionEvent } from '../services/metaCapi.service.js';
 
 
 const normalizePhone = (phone: string): string => {
@@ -242,6 +243,10 @@ export const createLead = asyncHandler(async (req: Request, res: Response) => {
     };
   }
   
+  if (data.rating === undefined || data.rating === null) {
+    data.rating = 0;
+  }
+
   // If no createdById, find first admin or use a system placeholder
   if (!data.createdById) {
       const firstAdmin = await prisma.user.findFirst({ where: { role: 'ADMIN' } });
@@ -273,6 +278,24 @@ export const createLead = asyncHandler(async (req: Request, res: Response) => {
       }
     });
   }
+
+  // Dispatch Meta CAPI "Lead" conversion event in background
+  sendMetaConversionEvent({
+    eventName: 'Lead',
+    eventId: lead.id,
+    actionSource: 'system_generated',
+    userData: {
+      email: lead.email,
+      phone: lead.phone,
+      firstName: lead.name?.split(' ')[0] || lead.name,
+      lastName: lead.name?.split(' ').slice(1).join(' ') || undefined,
+    },
+    customData: {
+      content_name: lead.project?.name || 'General Inquiry',
+      content_category: lead.brand?.name || 'Cookscape',
+      status: lead.status?.name || 'Fresh',
+    },
+  }).catch((err) => console.error('Meta CAPI Lead event error:', err));
 
   apiResponse.success(res, lead, 'Lead created successfully', 201);
 });
@@ -416,6 +439,36 @@ export const updateLead = asyncHandler(async (req: Request, res: Response) => {
       userId: req.body.userId || null
     }
   });
+
+  // Dispatch Meta CAPI conversion event on meaningful status transitions
+  if (data.statusId && updated.status?.name) {
+    const statusName = updated.status.name.toLowerCase();
+    let metaEvent: 'Schedule' | 'Purchase' | null = null;
+    let customData: Record<string, any> = { status: updated.status.name };
+
+    if (statusName.includes('order booked')) {
+      metaEvent = 'Purchase';
+      customData.currency = 'INR';
+      customData.value = 50000; // Benchmark lead value or custom
+    } else if (statusName.includes('appointment') || statusName.includes('visit') || statusName.includes('opportunities')) {
+      metaEvent = 'Schedule';
+    }
+
+    if (metaEvent) {
+      sendMetaConversionEvent({
+        eventName: metaEvent,
+        eventId: `${updated.id}_${updated.status.id}`,
+        actionSource: 'system_generated',
+        userData: {
+          email: updated.email,
+          phone: updated.phone,
+          firstName: updated.name?.split(' ')[0] || updated.name,
+          lastName: updated.name?.split(' ').slice(1).join(' ') || undefined,
+        },
+        customData,
+      }).catch((err) => console.error(`Meta CAPI ${metaEvent} error:`, err));
+    }
+  }
 
   apiResponse.success(res, updated, 'Lead updated successfully');
 });

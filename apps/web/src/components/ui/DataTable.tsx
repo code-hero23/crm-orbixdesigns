@@ -24,6 +24,7 @@ export interface DataTableProps {
 }
 
 const DataTable: React.FC<DataTableProps> = ({ columns, data, total, page, onPageChange, isLoading }) => {
+  const hasCustomAction = columns.some(c => c.accessor === 'actions' || c.header === 'Action');
   return (
     <div className="bg-white rounded shadow-sm border border-[#e3eaef] overflow-hidden">
       <div className="overflow-x-auto">
@@ -35,9 +36,11 @@ const DataTable: React.FC<DataTableProps> = ({ columns, data, total, page, onPag
                   {col.header}
                 </th>
               ))}
-              <th className="px-6 py-4 font-bold text-[#313a46] uppercase tracking-widest text-[10px] font-rubik text-center">
-                Action
-              </th>
+              {hasCustomAction ? null : (
+                <th className="px-6 py-4 font-bold text-[#313a46] uppercase tracking-widest text-[10px] font-rubik text-center">
+                  Action
+                </th>
+              )}
             </tr>
           </thead>
           <tbody className="divide-y divide-[#e3eaef] relative">
@@ -62,27 +65,29 @@ const DataTable: React.FC<DataTableProps> = ({ columns, data, total, page, onPag
                       {col.render ? col.render(row) : row[col.accessor]}
                     </td>
                   ))}
-                  <td className="px-6 py-4">
-                    <div className="flex items-center justify-center gap-1">
-                       <button className="p-1.5 text-brand hover:bg-brand/10 rounded transition-colors" title="View">
-                         <Eye size={16} />
-                       </button>
-                       <button className="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded transition-colors" title="Call">
-                         <Phone size={16} />
-                       </button>
-                       <button className="p-1.5 text-cyan-500 hover:bg-cyan-50 rounded transition-colors" title="WhatsApp">
-                         <MessageSquare size={16} />
-                       </button>
-                       <button className="p-1.5 text-gray-400 hover:bg-gray-100 rounded transition-colors" title="Edit">
-                         <Edit3 size={16} />
-                       </button>
-                    </div>
-                  </td>
+                  {hasCustomAction ? null : (
+                    <td className="px-6 py-4">
+                      <div className="flex items-center justify-center gap-1">
+                         <button className="p-1.5 text-brand hover:bg-brand/10 rounded transition-colors" title="View">
+                           <Eye size={16} />
+                         </button>
+                         <button className="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded transition-colors" title="Call">
+                           <Phone size={16} />
+                         </button>
+                         <button className="p-1.5 text-cyan-500 hover:bg-cyan-50 rounded transition-colors" title="WhatsApp">
+                           <MessageSquare size={16} />
+                         </button>
+                         <button className="p-1.5 text-gray-400 hover:bg-gray-100 rounded transition-colors" title="Edit">
+                           <Edit3 size={16} />
+                         </button>
+                      </div>
+                    </td>
+                  )}
                 </tr>
               ))
             ) : (
               <tr>
-                <td colSpan={columns.length + 1} className="px-6 py-20 text-center text-gray-400 italic font-roboto">
+                <td colSpan={columns.length + (hasCustomAction ? 0 : 1)} className="px-6 py-20 text-center text-gray-400 italic font-roboto">
                   No data found
                 </td>
               </tr>

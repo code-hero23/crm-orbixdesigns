@@ -20,6 +20,7 @@ import { getDashboardStats } from './controllers/dashboard.controller.js';
 import { authenticate } from './middleware/auth.middleware.js';
 import path from 'path';
 import { createWhatsAppLead } from './controllers/whatsapp.controller.js';
+import { intakeWebhookLead } from './controllers/webhook.controller.js';
 
 dotenv.config();
 
@@ -60,6 +61,7 @@ app.use(express.static(path.join(process.cwd(), 'public')));
 // API Routes
 app.use('/api/v1/auth', authRoutes); // Unprotected
 app.post('/api/v1/leads/whatsapp', createWhatsAppLead); // Public WhatsApp intake
+app.post('/api/v1/leads/webhook', intakeWebhookLead); // Public Webhook intake (Meta Ads, Google Sheets, Zapier)
 
 // Protected API Routes
 app.use('/api/v1/leads', authenticate, leadRoutes);
