@@ -21,7 +21,7 @@ interface CustomData {
 }
 
 interface MetaEventParams {
-  eventName: 'Lead' | 'Schedule' | 'Contact' | 'Purchase' | 'ViewContent' | 'CompleteRegistration';
+  eventName: string;
   eventId?: string;
   eventSourceUrl?: string;
   userData: UserData;

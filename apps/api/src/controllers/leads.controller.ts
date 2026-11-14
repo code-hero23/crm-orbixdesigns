@@ -442,16 +442,30 @@ export const updateLead = asyncHandler(async (req: Request, res: Response) => {
 
   // Dispatch Meta CAPI conversion event on meaningful status transitions
   if (data.statusId && updated.status?.name) {
-    const statusName = updated.status.name.toLowerCase();
-    let metaEvent: 'Schedule' | 'Purchase' | null = null;
-    let customData: Record<string, any> = { status: updated.status.name };
+    const statusName = updated.status.name.trim().toLowerCase();
+    let metaEvent: string | null = null;
+    let customData: Record<string, any> = { 
+      status: updated.status.name,
+      content_name: updated.project?.name || 'Interior Design',
+      content_category: updated.brand?.name || 'Cookscape'
+    };
 
-    if (statusName.includes('order booked')) {
+    if (statusName.includes('fresh')) {
+      metaEvent = 'Lead';
+    } else if (statusName.includes('yet to follow') || statusName.includes('yet to followup')) {
+      metaEvent = 'LeadAwaitingFollowUp';
+    } else if (statusName === 'follow-up' || statusName === 'followup' || statusName.includes('follow-up')) {
+      metaEvent = 'LeadModerate';
+    } else if (statusName.includes('opportunities') || statusName.includes('opportunity')) {
+      metaEvent = 'Contact';
+    } else if (statusName.includes('appointment') || statusName.includes('visit') || statusName.includes('showroom')) {
+      metaEvent = 'Schedule';
+    } else if (statusName.includes('order booked')) {
       metaEvent = 'Purchase';
       customData.currency = 'INR';
-      customData.value = 50000; // Benchmark lead value or custom
-    } else if (statusName.includes('appointment') || statusName.includes('visit') || statusName.includes('opportunities')) {
-      metaEvent = 'Schedule';
+      customData.value = 50000; // Benchmark order value or custom amount
+    } else if (statusName.includes('disqualified')) {
+      metaEvent = 'DisqualifiedLead';
     }
 
     if (metaEvent) {
