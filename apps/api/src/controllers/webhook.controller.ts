@@ -155,7 +155,7 @@ export const intakeWebhookLead = asyncHandler(async (req: Request, res: Response
   sendMetaConversionEvent({
     eventName: 'Lead',
     eventId: lead.id,
-    actionSource: 'system_generated',
+    actionSource: 'physical_store', // Offline Meta session
     userData: {
       email: lead.email,
       phone: lead.phone,

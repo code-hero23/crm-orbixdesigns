@@ -26,7 +26,7 @@ interface MetaEventParams {
   eventSourceUrl?: string;
   userData: UserData;
   customData?: CustomData;
-  actionSource?: 'website' | 'system_generated' | 'other';
+  actionSource?: 'website' | 'system_generated' | 'physical_store' | 'other';
 }
 
 /**

@@ -472,7 +472,7 @@ export const updateLead = asyncHandler(async (req: Request, res: Response) => {
       sendMetaConversionEvent({
         eventName: metaEvent,
         eventId: `${updated.id}_${updated.status.id}`,
-        actionSource: 'system_generated',
+        actionSource: 'physical_store', // Offline Meta session
         userData: {
           email: updated.email,
           phone: updated.phone,
