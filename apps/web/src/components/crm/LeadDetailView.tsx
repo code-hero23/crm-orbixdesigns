@@ -105,6 +105,10 @@ const LeadDetailView: FC<LeadDetailViewProps> = ({ lead, onRefresh }) => {
               <p className="text-[11px] font-bold text-gray-700">{lead.leadType || 'Direct Lead'}</p>
            </div>
            <div className="space-y-0.5">
+              <label className="text-[9px] font-bold text-gray-400 uppercase">Created By</label>
+              <p className="text-[11px] font-bold text-gray-700">{lead.createdBy?.fullName || 'Administrator'}</p>
+           </div>
+           <div className="space-y-0.5">
               <label className="text-[9px] font-bold text-gray-400 uppercase">Assigned To</label>
               <p className="text-[11px] font-bold text-gray-700">{lead.assignedTo?.fullName || '-'}</p>
            </div>

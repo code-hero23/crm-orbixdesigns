@@ -40,16 +40,19 @@ export const intakeWebhookLead = asyncHandler(async (req: Request, res: Response
   const rawSource = getField(['source', 'leadsource', 'platform']) || 'Meta Ads';
   const rawProject = getField(['project', 'projectname', 'service', 'category']) || 'Modular Kitchen';
   const campaignName = getField(['campaign', 'campaignname', 'ad_name', 'adname', 'form_name']);
-  const rawComments = getField(['comments', 'notes', 'remarks', 'message', 'requirement']);
+  const rawComments = getField(['comments', 'notes', 'remarks', 'message', 'survey']);
+  const rawInstruction = getField(['instructiontopass', 'instruction', 'instructions']);
   const rawRating = getField(['rating', 'star', 'stars']);
   const rating = rawRating !== undefined && !isNaN(Number(rawRating)) ? Number(rawRating) : 6;
+  const location = getField(['city', 'location', 'district', 'state']) || '';
 
+  // Requirement and Location for instructionToPass
+  let instructionToPass = rawInstruction 
+    ? String(rawInstruction).trim() 
+    : [rawProject, location].filter(Boolean).join(' - ');
+
+  // Clean comments: Property Type / BHK / Budget / Timeline ONLY
   let fullComments = rawComments ? String(rawComments).trim() : '';
-  if (campaignName) {
-    fullComments = fullComments 
-      ? `Campaign: ${campaignName} | ${fullComments}`
-      : `Generated via Meta Campaign: ${campaignName}`;
-  }
 
   const source = await prisma.source.upsert({
     where: { name: String(rawSource).trim() },
@@ -84,8 +87,14 @@ export const intakeWebhookLead = asyncHandler(async (req: Request, res: Response
     freshStatus = await prisma.leadStatus.create({ data: { name: 'Fresh' } });
   }
 
-  const adminUser = await prisma.user.findFirst({ where: { role: 'ADMIN' } });
-  const createdById = adminUser?.id || 'webhook';
+  const adminUser = await prisma.user.findFirst({ 
+    where: { role: 'ADMIN' },
+    orderBy: { createdAt: 'asc' }
+  });
+  const createdById = adminUser?.id;
+  if (!createdById) {
+    return apiResponse.error(res, 'Administrator account not found in system', 500);
+  }
 
   const existingLead = await prisma.lead.findFirst({
     where: { phone: { contains: phone } },
@@ -105,9 +114,11 @@ export const intakeWebhookLead = asyncHandler(async (req: Request, res: Response
         name,
         email: email ?? existingLead.email,
         comments: updatedComments,
+        instructionToPass: instructionToPass || existingLead.instructionToPass,
         sourceId: source.id,
         brandId: brand.id,
         projectId: project.id,
+        leadType: 'Meta Ads',
       },
       include: { status: true, brand: true, project: true, source: true },
     });
@@ -117,7 +128,7 @@ export const intakeWebhookLead = asyncHandler(async (req: Request, res: Response
         leadId: lead.id,
         type: 'NOTE',
         content: `Lead re-engaged via Webhook (${rawSource}). ${fullComments}`,
-        userId: null,
+        userId: adminUser.id,
       },
     });
   } else {
@@ -131,10 +142,11 @@ export const intakeWebhookLead = asyncHandler(async (req: Request, res: Response
         projectId: project.id,
         sourceId: source.id,
         statusId: freshStatus.id,
+        leadType: 'Meta Ads',
         rating,
         comments: fullComments,
-        instructionToPass: `Follow up with ${name} regarding ${project.name} inquiry from ${rawSource}.`,
-        createdById,
+        instructionToPass,
+        createdById: adminUser.id,
         dataCollected: new Date(),
         contactableDate: new Date(),
       },
@@ -145,8 +157,8 @@ export const intakeWebhookLead = asyncHandler(async (req: Request, res: Response
       data: {
         leadId: lead.id,
         type: 'SYSTEM',
-        content: `Lead ingested automatically via Webhook (${rawSource})`,
-        userId: null,
+        content: `Lead added by ${adminUser.fullName || 'Administrator'} via Webhook (${rawSource})`,
+        userId: adminUser.id,
       },
     });
   }

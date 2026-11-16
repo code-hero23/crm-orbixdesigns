@@ -135,6 +135,7 @@ export const getLeads = asyncHandler(async (req: Request, res: Response) => {
         tags: true,
         currentStage: true,
         assignedTo: { select: { id: true, fullName: true, role: true } },
+        createdBy: { select: { id: true, fullName: true, role: true } },
         activities: { orderBy: { createdAt: 'desc' }, include: { user: true } },
       },
       orderBy: { createdAt: 'desc' },

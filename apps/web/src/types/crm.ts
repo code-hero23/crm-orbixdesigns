@@ -50,6 +50,8 @@ export interface Lead {
   nextFollowUp: string | null;
   assignedToId?: string | null;
   assignedTo?: UserBasic | null;
+  createdById?: string;
+  createdBy?: UserBasic | null;
   status: LeadStatus | null;
   statusId: string | null;
   source?: Source | null;
